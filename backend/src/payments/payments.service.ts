@@ -116,8 +116,56 @@ export class PaymentsService {
     return { authorizationUrl: data.authorization_url, reference: data.reference };
   }
 
+  async verifyOrderPayment(orderId: string, buyerId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { farmer: true },
+    });
+    if (!order) throw new BadRequestException('Order not found');
+    if (order.buyerId !== buyerId) throw new BadRequestException('Forbidden');
+    if (!order.paystackRef) throw new BadRequestException('No payment started for this order');
+
+    const existingTx = await this.prisma.transaction.findFirst({
+      where: { reference: order.paystackRef, source: 'order_payment' },
+    });
+    if (order.paymentStatus === 'success' && existingTx) {
+      return { status: 'already_paid' as const };
+    }
+
+    try {
+      const res = await axios.get(
+        `${this.paystackBaseUrl}/transaction/verify/${encodeURIComponent(order.paystackRef)}`,
+        { headers: this.headers },
+      );
+      const data = res.data?.data;
+      if (data?.status === 'success') {
+        await this.reconcilePayment({
+          reference: data.reference ?? order.paystackRef,
+          metadata: data.metadata ?? { orderId, buyerId, type: 'order' },
+        });
+        return { status: 'verified' as const };
+      }
+      return { status: data?.status ?? 'pending' };
+    } catch (err) {
+      if (isAxiosError(err)) {
+        const paystackMsg =
+          (err.response?.data as { message?: string } | undefined)?.message ?? err.message;
+        this.logger.error(`Paystack verify failed: ${paystackMsg}`);
+        throw new BadRequestException(`Could not verify payment: ${paystackMsg}`);
+      }
+      throw err;
+    }
+  }
+
   async handleWebhook(rawBody: Buffer, signature: string) {
-    const secret = process.env.PAYSTACK_WEBHOOK_SECRET ?? '';
+    const secret = process.env.PAYSTACK_WEBHOOK_SECRET?.trim() ?? '';
+    if (!secret) {
+      this.logger.warn(
+        'PAYSTACK_WEBHOOK_SECRET is not set — webhook rejected. Add it from Paystack dashboard or rely on /payments/orders/:id/verify after checkout.',
+      );
+      throw new BadRequestException('Webhook secret not configured');
+    }
+
     const hash = createHmac('sha512', secret).update(rawBody).digest('hex');
 
     if (hash !== signature) {
@@ -159,35 +207,50 @@ export class PaymentsService {
       });
       if (!order) return;
 
+      const existingTx = await this.prisma.transaction.findFirst({
+        where: { reference, source: 'order_payment' },
+      });
+      if (existingTx) {
+        if (order.paymentStatus !== 'success') {
+          await this.prisma.order.update({
+            where: { id: order.id },
+            data: { paymentStatus: 'success', status: 'accepted' },
+          });
+        }
+        return;
+      }
+
       await this.prisma.order.update({
         where: { id: order.id },
         data: { paymentStatus: 'success', status: 'accepted' },
       });
 
-      // Credit farmer wallet
-      const wallet = await this.prisma.wallet.findUnique({
+      let wallet = await this.prisma.wallet.findUnique({
         where: { userId: order.farmer.userId },
       });
-      if (wallet) {
-        const newBalance = wallet.balance + order.total * 0.95; // 5% platform fee
-        await this.prisma.wallet.update({
-          where: { id: wallet.id },
-          data: { balance: newBalance },
-        });
-        await this.prisma.transaction.create({
-          data: {
-            walletId: wallet.id,
-            type: 'credit',
-            source: 'order_payment',
-            amount: order.total * 0.95,
-            balance: newBalance,
-            reference,
-            note: `Order #${order.id.slice(0, 8)}`,
-          },
-        });
+      if (!wallet) {
+        wallet = await this.prisma.wallet.create({ data: { userId: order.farmer.userId } });
       }
 
-      this.logger.log(`Order ${order.id} payment reconciled`);
+      const creditAmount = order.total * 0.95; // 5% platform fee
+      const newBalance = wallet.balance + creditAmount;
+      await this.prisma.wallet.update({
+        where: { id: wallet.id },
+        data: { balance: newBalance },
+      });
+      await this.prisma.transaction.create({
+        data: {
+          walletId: wallet.id,
+          type: 'credit',
+          source: 'order_payment',
+          amount: creditAmount,
+          balance: newBalance,
+          reference,
+          note: `Order #${order.id.slice(0, 8)}`,
+        },
+      });
+
+      this.logger.log(`Order ${order.id} payment reconciled — farmer credited ₵${creditAmount.toFixed(2)}`);
     }
 
     if (metadata?.type === 'investment') {

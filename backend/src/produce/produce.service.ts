@@ -122,9 +122,27 @@ export class ProduceService {
         .sort((a, b) => (countByName.get(b) ?? 0) - (countByName.get(a) ?? 0)),
     ];
 
+    const samples = await this.prisma.produceListing.findMany({
+      where: {
+        status: 'active',
+        category: { in: orderedNames },
+        NOT: { images: { isEmpty: true } },
+      },
+      select: { category: true, images: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const imageByCategory = new Map<string, string>();
+    for (const row of samples) {
+      if (row.category && !imageByCategory.has(row.category) && row.images[0]) {
+        imageByCategory.set(row.category, row.images[0]);
+      }
+    }
+
     return orderedNames.map((name) => ({
       name,
       count: countByName.get(name) ?? 0,
+      image: imageByCategory.get(name) ?? null,
     }));
   }
 

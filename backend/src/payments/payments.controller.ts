@@ -19,6 +19,14 @@ export class PaymentsController {
     return this.service.initializeOrderPayment(orderId, user.id);
   }
 
+  @Post('orders/:orderId/verify')
+  @Roles('buyer')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verify Paystack payment and credit farmer wallet' })
+  verifyOrderPayment(@CurrentUser() user: any, @Param('orderId') orderId: string) {
+    return this.service.verifyOrderPayment(orderId, user.id);
+  }
+
   @Post('investments/:investmentId/initialize')
   @Roles('investor')
   @ApiBearerAuth()

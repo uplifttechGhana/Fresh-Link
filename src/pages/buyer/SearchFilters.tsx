@@ -1,4 +1,4 @@
-import React, { useState, useDeferredValue, useEffect, useCallback } from 'react';
+import React, { useState, useDeferredValue, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, X, SlidersHorizontal, Clock, Trash2, Users, Plus } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
@@ -10,18 +10,26 @@ import { resolveMediaUrl } from '../../lib/mediaUrl';
 
 const RECENT_KEY = 'fl_recent_searches';
 const MAX_RECENT = 8;
+const MIN_SEARCH_LENGTH = 2;
 
 function loadRecent(): string[] {
   try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]');
+    const raw = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') as string[];
+    const cleaned = raw.filter((t) => typeof t === 'string' && t.trim().length >= MIN_SEARCH_LENGTH);
+    if (cleaned.length !== raw.length) {
+      localStorage.setItem(RECENT_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch {
     return [];
   }
 }
 
 function saveRecent(term: string) {
-  const current = loadRecent().filter((t) => t !== term);
-  const updated = [term, ...current].slice(0, MAX_RECENT);
+  const trimmed = term.trim();
+  if (trimmed.length < MIN_SEARCH_LENGTH) return loadRecent();
+  const current = loadRecent().filter((t) => t !== trimmed);
+  const updated = [trimmed, ...current].slice(0, MAX_RECENT);
   localStorage.setItem(RECENT_KEY, JSON.stringify(updated));
   return updated;
 }
@@ -65,19 +73,21 @@ export function SearchFilters() {
   const results = data?.items ?? [];
   const hasSearch = !!deferredQuery || !!activeCategory;
 
-  // Save to recent when user settles on a typed query
-  useEffect(() => {
-    if (!deferredQuery.trim()) return;
-    const id = setTimeout(() => {
-      setRecentSearches(saveRecent(deferredQuery.trim()));
-    }, 1000);
-    return () => clearTimeout(id);
-  }, [deferredQuery]);
+  const commitSearch = useCallback((term: string) => {
+    const trimmed = term.trim();
+    if (trimmed.length < MIN_SEARCH_LENGTH) return;
+    setRecentSearches(saveRecent(trimmed));
+  }, []);
 
   const selectRecent = useCallback((term: string) => {
     setQuery(term);
     setActiveCategory(undefined);
   }, []);
+
+  const selectCategory = useCallback((name: string) => {
+    setActiveCategory(name === activeCategory ? undefined : name);
+    setQuery('');
+  }, [activeCategory]);
 
   const deleteRecent = useCallback((e: React.MouseEvent, term: string) => {
     e.stopPropagation();
@@ -96,6 +106,10 @@ export function SearchFilters() {
             placeholder="Search produce…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitSearch(query);
+            }}
+            onBlur={() => commitSearch(query)}
             autoFocus
           />
           {query && (
@@ -167,29 +181,45 @@ export function SearchFilters() {
             {/* Popular Categories */}
             <h3 className="font-bold text-ink mb-3">Popular Categories</h3>
             {catsLoading ? (
-              <div className="flex flex-wrap gap-2">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="h-9 w-24 rounded-full bg-white animate-pulse" />
+              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-6 px-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="w-28 h-32 rounded-2xl bg-white animate-pulse flex-shrink-0" />
                 ))}
               </div>
             ) : categories.length === 0 ? (
               <p className="text-sm text-muted">No categories yet.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
-                  <button
-                    key={cat.name}
-                    onClick={() => setActiveCategory(cat.name === activeCategory ? undefined : cat.name)}
-                    className={`px-4 py-2 rounded-full text-sm font-bold shadow-sm border transition-all ${
-                      cat.name === activeCategory
-                        ? 'bg-green text-white border-green'
-                        : 'bg-white text-ink border-gray-100'
-                    }`}
-                  >
-                    {cat.name}
-                    <span className="ml-1.5 text-[10px] opacity-60">({cat.count})</span>
-                  </button>
-                ))}
+              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-6 px-6">
+                {categories
+                  .filter((cat) => cat.count > 0)
+                  .map((cat) => {
+                    const imageUrl = resolveMediaUrl(cat.image ?? undefined);
+                    return (
+                      <button
+                        key={cat.name}
+                        onClick={() => selectCategory(cat.name)}
+                        className={`w-28 flex-shrink-0 rounded-2xl overflow-hidden shadow-sm border transition-all text-left ${
+                          cat.name === activeCategory
+                            ? 'border-green ring-2 ring-green/30'
+                            : 'border-gray-100 bg-white'
+                        }`}
+                      >
+                        <div className="h-20 w-full bg-gray-100 relative">
+                          {imageUrl ? (
+                            <img src={imageUrl} alt={cat.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-2xl bg-green-50">
+                              🌾
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-2">
+                          <p className="font-bold text-xs text-ink leading-tight line-clamp-1">{cat.name}</p>
+                          <p className="text-[10px] text-muted">{cat.count} items</p>
+                        </div>
+                      </button>
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -236,6 +266,11 @@ export function SearchFilters() {
                   farmer={p.farmer?.user?.name ?? 'Farmer'}
                   farmerId={p.farmer?.userId ?? ''}
                   image={resolveMediaUrl(p.images[0]) ?? ''}
+                  onSelect={() => {
+                    if (deferredQuery.trim().length >= MIN_SEARCH_LENGTH) {
+                      commitSearch(deferredQuery);
+                    }
+                  }}
                 />
               ))}
             </div>
@@ -337,6 +372,7 @@ function SearchResultCard({
   farmer,
   farmerId,
   image,
+  onSelect,
 }: {
   id: string;
   title: string;
@@ -345,6 +381,7 @@ function SearchResultCard({
   farmer: string;
   farmerId: string;
   image: string;
+  onSelect?: () => void;
 }) {
   const navigate = useNavigate();
   const addItem = useCartStore((s) => s.addItem);
@@ -352,7 +389,10 @@ function SearchResultCard({
   return (
     <Card
       className="p-3 flex gap-3 items-center bg-green border-none"
-      onClick={() => navigate(`/buyer/product/${id}`)}
+      onClick={() => {
+        onSelect?.();
+        navigate(`/buyer/product/${id}`);
+      }}
     >
       <div className="w-20 h-20 bg-white/20 rounded-2xl overflow-hidden flex-shrink-0">
         <img src={image} alt={title} className="w-full h-full object-cover" />

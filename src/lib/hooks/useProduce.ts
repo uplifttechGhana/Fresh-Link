@@ -160,6 +160,7 @@ export function useProduceList(query: ProduceQuery = {}) {
 export interface ProduceCategory {
   name: string;
   count: number;
+  image: string | null;
 }
 
 export interface PriceTrendPoint { name: string; price: number; }

@@ -1,10 +1,10 @@
-import React, { useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Phone, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
-import { useOrder, formatOrderStatus } from '../../lib/hooks/useOrders';
+import { useOrder, formatOrderStatus, useVerifyOrderPayment } from '../../lib/hooks/useOrders';
 import { useOrderStatusSocket, useStartConversation } from '../../lib/hooks/useChat';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -24,10 +24,27 @@ function stepIndex(status: string) {
 export function OrderTracking() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const qc = useQueryClient();
   const startConv = useStartConversation();
+  const verifyPayment = useVerifyOrderPayment();
+  const verifyAttempted = useRef(false);
 
   const { data: order, isLoading } = useOrder(id);
+
+  // After Paystack redirect, verify payment and credit the farmer wallet.
+  useEffect(() => {
+    if (!id || !order || verifyAttempted.current) return;
+    if (order.paymentStatus === 'success') return;
+    if (!order.paystackRef && !searchParams.get('reference') && !searchParams.get('trxref')) return;
+
+    verifyAttempted.current = true;
+    verifyPayment.mutate(id, {
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ['orders', 'detail', id] });
+      },
+    });
+  }, [id, order, searchParams, verifyPayment, qc]);
 
   // Listen for real-time order status pushes
   useOrderStatusSocket(

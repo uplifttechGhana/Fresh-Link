@@ -123,6 +123,19 @@ export function useInitOrderPayment() {
   });
 }
 
+export function useVerifyOrderPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (orderId: string) =>
+      api.post<{ status: string }>(`/payments/orders/${orderId}/verify`, {}),
+    onSuccess: (_data, orderId) => {
+      qc.invalidateQueries({ queryKey: orderKeys.detail(orderId) });
+      qc.invalidateQueries({ queryKey: orderKeys.farmerList() });
+      qc.invalidateQueries({ queryKey: ['wallet'] });
+    },
+  });
+}
+
 export function useCancelOrder() {
   const qc = useQueryClient();
   return useMutation({
