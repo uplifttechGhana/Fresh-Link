@@ -23,6 +23,13 @@ export interface GeminiCropAnalysis {
   disclaimer: string;
 }
 
+const MODEL_FALLBACKS = [
+  'gemini-2.0-flash',
+  'gemini-2.5-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+];
+
 const SCAN_PROMPT = `You are an agricultural assistant for farmers in Ghana. Analyze this crop or plant photo.
 
 Respond ONLY with valid JSON matching this schema (no markdown):
@@ -44,16 +51,73 @@ export class GeminiService {
 
   constructor(private config: ConfigService) {}
 
-  getStatus() {
-    const apiKey = this.config.get<string>('GEMINI_API_KEY')?.trim();
-    const model =
-      this.config.get<string>('GEMINI_MODEL')?.trim() || 'gemini-2.0-flash';
-    return {
+  private readApiKey(): string | null {
+    const raw = this.config.get<string>('GEMINI_API_KEY');
+    if (!raw) return null;
+    const trimmed = raw.trim().replace(/^["']|["']$/g, '');
+    return trimmed || null;
+  }
+
+  private configuredModels(): string[] {
+    const preferred = this.config.get<string>('GEMINI_MODEL')?.trim();
+    if (preferred) return [preferred, ...MODEL_FALLBACKS.filter((m) => m !== preferred)];
+    return [...MODEL_FALLBACKS];
+  }
+
+  async getStatus(verify = false) {
+    const apiKey = this.readApiKey();
+    const models = this.configuredModels();
+    const model = models[0];
+
+    const base = {
       configured: !!apiKey,
       model,
+      modelsTried: models,
+      keyFormatOk: apiKey ? apiKey.startsWith('AIza') : false,
       hint: apiKey
-        ? 'Crop scan is ready. Farmers can upload photos from Knowledge Hub → Scan Crop.'
+        ? apiKey.startsWith('AIza')
+          ? 'Crop scan is ready. Farmers can upload photos from Knowledge Hub → Scan Crop.'
+          : 'GEMINI_API_KEY is set but does not look like a Google AI Studio key (expected AIza…). Create one at https://aistudio.google.com/apikey'
         : 'Set GEMINI_API_KEY in Railway/backend .env (Google AI Studio).',
+    };
+
+    if (!verify || !apiKey) return base;
+
+    const verification = await this.verifyConnection();
+    return { ...base, ...verification };
+  }
+
+  async verifyConnection(): Promise<{
+    verified: boolean;
+    workingModel: string | null;
+    error: string | null;
+  }> {
+    const apiKey = this.readApiKey();
+    if (!apiKey) {
+      return { verified: false, workingModel: null, error: 'GEMINI_API_KEY is not set' };
+    }
+
+    for (const model of this.configuredModels()) {
+      try {
+        await this.generateText(model, apiKey, 'Reply with exactly: ok');
+        return { verified: true, workingModel: model, error: null };
+      } catch (err) {
+        const msg = this.extractErrorMessage(err);
+        this.logger.warn(`Gemini verify failed for ${model}: ${msg}`);
+        if (this.isAuthError(err)) {
+          return {
+            verified: false,
+            workingModel: null,
+            error: msg,
+          };
+        }
+      }
+    }
+
+    return {
+      verified: false,
+      workingModel: null,
+      error: 'No Gemini model responded. Check API key and enable Generative Language API.',
     };
   }
 
@@ -61,66 +125,130 @@ export class GeminiService {
     imageBase64: string,
     mimeType: string,
   ): Promise<GeminiCropAnalysis> {
-    const apiKey = this.config.get<string>('GEMINI_API_KEY')?.trim();
+    const apiKey = this.readApiKey();
     if (!apiKey) {
       throw new ServiceUnavailableException(
         'Crop scan is not configured. Ask an admin to set GEMINI_API_KEY.',
       );
     }
 
-    const model =
-      this.config.get<string>('GEMINI_MODEL')?.trim() || 'gemini-2.0-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-
-    try {
-      const { data } = await axios.post(
-        url,
-        {
-          contents: [
-            {
-              parts: [
-                { text: SCAN_PROMPT },
-                {
-                  inline_data: {
-                    mime_type: mimeType,
-                    data: imageBase64,
-                  },
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            temperature: 0.2,
-          },
-        },
-        {
-          params: { key: apiKey },
-          timeout: 45000,
-        },
+    if (!apiKey.startsWith('AIza')) {
+      throw new ServiceUnavailableException(
+        'GEMINI_API_KEY looks invalid. Create a key at Google AI Studio (starts with AIza).',
       );
-
-      const text =
-        data?.candidates?.[0]?.content?.parts
-          ?.map((p: { text?: string }) => p.text ?? '')
-          .join('')
-          .trim() ?? '';
-
-      if (!text) {
-        throw new Error('Empty response from Gemini');
-      }
-
-      return this.parseAnalysis(text);
-    } catch (err) {
-      this.logger.error(`Gemini crop scan failed: ${(err as Error).message}`);
-      if (axios.isAxiosError(err)) {
-        const msg =
-          (err.response?.data as { error?: { message?: string } })?.error
-            ?.message ?? err.message;
-        throw new ServiceUnavailableException(`Crop scan failed: ${msg}`);
-      }
-      throw err;
     }
+
+    const errors: string[] = [];
+
+    for (const model of this.configuredModels()) {
+      try {
+        const text = await this.generateWithImage(
+          model,
+          apiKey,
+          SCAN_PROMPT,
+          imageBase64,
+          mimeType,
+        );
+        if (!text) throw new Error('Empty response from Gemini');
+        return this.parseAnalysis(text);
+      } catch (err) {
+        const msg = this.extractErrorMessage(err);
+        errors.push(`${model}: ${msg}`);
+        this.logger.warn(`Gemini crop scan failed for ${model}: ${msg}`);
+        if (this.isAuthError(err)) break;
+      }
+    }
+
+    throw new ServiceUnavailableException(
+      errors[0] ?? 'Crop scan failed. Try again with a clearer photo.',
+    );
+  }
+
+  private async generateText(model: string, apiKey: string, prompt: string) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+    const { data } = await axios.post(
+      url,
+      {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0 },
+      },
+      {
+        headers: { 'x-goog-api-key': apiKey },
+        timeout: 20000,
+      },
+    );
+
+    const text =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((p: { text?: string }) => p.text ?? '')
+        .join('')
+        .trim() ?? '';
+
+    if (!text) throw new Error('Empty response from Gemini');
+    return text;
+  }
+
+  private async generateWithImage(
+    model: string,
+    apiKey: string,
+    prompt: string,
+    imageBase64: string,
+    mimeType: string,
+  ) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+    const { data } = await axios.post(
+      url,
+      {
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: imageBase64,
+                },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.2,
+        },
+      },
+      {
+        headers: { 'x-goog-api-key': apiKey },
+        timeout: 45000,
+      },
+    );
+
+    return (
+      data?.candidates?.[0]?.content?.parts
+        ?.map((p: { text?: string }) => p.text ?? '')
+        .join('')
+        .trim() ?? ''
+    );
+  }
+
+  private extractErrorMessage(err: unknown): string {
+    if (axios.isAxiosError(err)) {
+      const apiMsg = (err.response?.data as { error?: { message?: string } })?.error
+        ?.message;
+      return apiMsg ?? err.message;
+    }
+    return err instanceof Error ? err.message : 'Unknown error';
+  }
+
+  private isAuthError(err: unknown): boolean {
+    if (!axios.isAxiosError(err)) return false;
+    const status = err.response?.status;
+    const reason = (
+      err.response?.data as {
+        error?: { details?: Array<{ reason?: string }> };
+      }
+    )?.error?.details?.[0]?.reason;
+    return status === 401 || status === 403 || reason === 'API_KEY_INVALID';
   }
 
   private parseAnalysis(raw: string): GeminiCropAnalysis {

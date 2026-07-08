@@ -57,6 +57,6 @@ export class IntegrationsController {
   @Get('gemini/status')
   @ApiOperation({ summary: 'Google Gemini crop scan integration status' })
   getGeminiStatus() {
-    return this.gemini.getStatus();
+    return this.gemini.getStatus(true);
   }
 }

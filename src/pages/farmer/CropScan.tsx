@@ -13,6 +13,7 @@ import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { uploadFile } from '../../lib/hooks/useStorage';
+import { formatApiError } from '../../lib/api';
 import { resolveMediaUrl } from '../../lib/mediaUrl';
 import { useNativeCamera } from '../../lib/hooks/useNativeCamera';
 import { useHaptics } from '../../lib/hooks/useHaptics';
@@ -69,7 +70,7 @@ export function CropScan() {
       setResult(scan);
       impact('medium');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Scan failed. Try again.');
+      setError(formatApiError(err, 'Scan failed. Try again.'));
     } finally {
       setUploading(false);
     }

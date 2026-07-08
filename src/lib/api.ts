@@ -114,6 +114,18 @@ async function request<T>(
   return res.json() as Promise<T>;
 }
 
+/** Extract a user-facing message from a failed API response. */
+export function formatApiError(err: unknown, fallback = 'Something went wrong. Please try again.'): string {
+  if (err instanceof ApiError) {
+    const body = err.body as { message?: string | string[] } | null;
+    if (Array.isArray(body?.message)) return body.message.join(', ');
+    if (typeof body?.message === 'string') return body.message;
+    return err.message;
+  }
+  if (err instanceof Error) return err.message;
+  return fallback;
+}
+
 export const api = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body: unknown) => request<T>('POST', path, body),
