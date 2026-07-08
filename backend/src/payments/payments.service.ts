@@ -158,12 +158,16 @@ export class PaymentsService {
   }
 
   async handleWebhook(rawBody: Buffer, signature: string) {
-    const secret = process.env.PAYSTACK_WEBHOOK_SECRET?.trim() ?? '';
+    // Paystack signs webhooks with the same Secret Key (no separate webhook secret).
+    const secret =
+      process.env.PAYSTACK_WEBHOOK_SECRET?.trim() ||
+      process.env.PAYSTACK_SECRET_KEY?.trim() ||
+      '';
     if (!secret) {
       this.logger.warn(
-        'PAYSTACK_WEBHOOK_SECRET is not set — webhook rejected. Add it from Paystack dashboard or rely on /payments/orders/:id/verify after checkout.',
+        'PAYSTACK_SECRET_KEY is not set — webhook rejected. Add it to Railway env vars.',
       );
-      throw new BadRequestException('Webhook secret not configured');
+      throw new BadRequestException('Paystack secret key not configured');
     }
 
     const hash = createHmac('sha512', secret).update(rawBody).digest('hex');
