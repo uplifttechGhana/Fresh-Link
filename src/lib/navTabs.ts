@@ -16,7 +16,7 @@ export const BUYER_NAV: RoleNavConfig = {
   tabs: [
     { id: 'home', labelKey: 'nav.home', route: '/buyer/home' },
     { id: 'explore', labelKey: 'common.search', route: '/buyer/search' },
-    { id: 'farmers', labelKey: 'buyer.saved', route: '/buyer/saved' },
+    { id: 'farmers', labelKey: 'buyer.following', route: '/buyer/saved' },
     { id: 'cart', labelKey: 'buyer.cart', route: '/buyer/cart' },
   ],
   getActiveTab(pathname) {

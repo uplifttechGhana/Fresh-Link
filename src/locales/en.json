@@ -225,8 +225,9 @@
     "cart": "Cart",
     "checkout": "Checkout",
     "orderHistory": "Order History",
-    "savedFarmers": "Saved Farmers",
+    "savedFarmers": "Following",
     "saved": "Saved",
+    "following": "Following",
     "favorites": "Favorites"
   },
   "investor": {

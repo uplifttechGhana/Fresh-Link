@@ -14,7 +14,7 @@ export function SavedFarmers() {
 
   return (
     <div className="w-full h-full bg-cream flex flex-col relative">
-      <TopBar title="Saved Farmers" showBack />
+      <TopBar title="Following" showBack />
 
       <div className="flex-1 overflow-y-auto no-scrollbar px-6 pt-4 pb-24">
         {isLoading ? (
@@ -26,9 +26,9 @@ export function SavedFarmers() {
             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
               <span className="text-3xl">👨‍🌾</span>
             </div>
-            <h3 className="font-display font-bold text-lg text-ink mb-2">No Saved Farmers</h3>
-            <p className="text-muted text-sm max-w-[200px]">
-              Farmers you follow will appear here for quick access.
+            <h3 className="font-display font-bold text-lg text-ink mb-2">Not following anyone yet</h3>
+            <p className="text-muted text-sm max-w-[240px]">
+              Farmers and drivers you follow from chat will appear here for quick access.
             </p>
           </div>
         ) : (
