@@ -31,6 +31,12 @@ export class PaymentsService {
     return (process.env.FRONTEND_URL ?? 'http://localhost:5173').replace(/\/$/, '');
   }
 
+  /** HashRouter routes must include `/#/` or Paystack redirects 404 on Vercel. */
+  private frontendCallback(path: string) {
+    const normalized = path.startsWith('/') ? path : `/${path}`;
+    return `${this.frontendBase()}/#${normalized}`;
+  }
+
   private async paystackInitialize(payload: Record<string, unknown>) {
     try {
       const res = await axios.post(
@@ -71,7 +77,7 @@ export class PaymentsService {
       amount: Math.round(order.total * 100), // pesewas
       reference: `FL-ORDER-${orderId}-${Date.now()}`,
       metadata: { orderId, buyerId, type: 'order' },
-      callback_url: `${this.frontendBase()}/buyer/tracking/${orderId}`,
+      callback_url: this.frontendCallback(`/buyer/tracking/${orderId}`),
     });
 
     await this.prisma.order.update({
@@ -99,7 +105,7 @@ export class PaymentsService {
       amount: Math.round(investment.amount * 100),
       reference: `FL-INV-${investmentId}-${Date.now()}`,
       metadata: { investmentId, investorId, type: 'investment' },
-      callback_url: `${this.frontendBase()}/investor/portfolio`,
+      callback_url: this.frontendCallback('/investor/portfolio'),
     });
 
     await this.prisma.investment.update({

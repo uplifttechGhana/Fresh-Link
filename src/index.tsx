@@ -25,6 +25,12 @@ try {
     }
   }
 } catch { /* ignore parse errors */ }
+
+// Paystack redirects to callback_url without the hash — fix before HashRouter mounts.
+const { pathname, search, hash } = window.location;
+if (!hash && pathname !== '/' && !/\.[a-z0-9]+$/i.test(pathname)) {
+  window.location.replace(`/#${pathname}${search}`);
+}
 // ─────────────────────────────────────────────────────────────────────────
 
 const rootEl = document.getElementById("root");
