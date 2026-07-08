@@ -1,0 +1,84 @@
+import React from 'react';
+import { ChevronLeft, MoreHorizontal, Search, Bookmark, MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+interface TopBarProps {
+  title?: string;
+  showBack?: boolean;
+  rightAction?: 'search' | 'more' | 'bookmark' | 'skip' | 'messages' | 'none';
+  onRightAction?: () => void;
+  transparent?: boolean;
+}
+export function TopBar({
+  title,
+  showBack = false,
+  rightAction = 'none',
+  onRightAction,
+  transparent = false
+}: TopBarProps) {
+  const navigate = useNavigate();
+  return (
+    <div
+      className={`flex flex-shrink-0 items-center justify-between px-6 py-4 ${transparent ? 'bg-transparent' : 'bg-cream/80 backdrop-blur-md'} z-30 relative`}>
+      
+      <div className="w-10">
+        {showBack &&
+        <button
+          onClick={() => navigate(-1)}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-ink hover:bg-gray-50 transition-colors">
+          
+            <ChevronLeft size={20} strokeWidth={2.5} />
+          </button>
+        }
+      </div>
+
+      {title &&
+      <h1 className="font-display font-bold text-lg text-ink truncate max-w-[200px]">
+          {title}
+        </h1>
+      }
+
+      <div className="w-10 flex justify-end">
+        {rightAction === 'search' &&
+        <button
+          onClick={onRightAction}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-ink">
+          
+            <Search size={20} />
+          </button>
+        }
+        {rightAction === 'more' &&
+        <button
+          onClick={onRightAction}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-ink">
+          
+            <MoreHorizontal size={20} />
+          </button>
+        }
+        {rightAction === 'bookmark' &&
+        <button
+          onClick={onRightAction}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-ink">
+          
+            <Bookmark size={20} />
+          </button>
+        }
+        {rightAction === 'messages' &&
+        <button
+          onClick={onRightAction}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-ink">
+          
+            <MessageCircle size={20} />
+          </button>
+        }
+        {rightAction === 'skip' &&
+        <button
+          onClick={onRightAction}
+          className="text-green font-bold text-sm">
+          
+            Skip
+          </button>
+        }
+      </div>
+    </div>);
+
+}

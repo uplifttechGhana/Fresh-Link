@@ -1,0 +1,66 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths: ['backend/**']
+  pull_request:
+    paths: ['backend/**']
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: freshlink_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: node_modules/.bin/prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/freshlink_test
+
+      - name: Run Prisma migrations
+        run: node_modules/.bin/prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/freshlink_test
+
+      - name: TypeScript check
+        run: node_modules/.bin/tsc --noEmit
+
+      - name: Run tests
+        run: npm test -- --passWithNoTests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/freshlink_test
+          JWT_ACCESS_SECRET: test_access_secret_64chars_min
+          JWT_REFRESH_SECRET: test_refresh_secret_64chars_min
+          NODE_ENV: test
+
+      - name: Build
+        run: node_modules/.bin/nest build

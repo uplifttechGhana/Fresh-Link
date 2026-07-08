@@ -1,0 +1,221 @@
+/* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+/* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import 'leaflet/dist/leaflet.css';
+
+/* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
+
+:root {
+  /* Brand */
+  --forest: #0E4D2C;       /* deep forest green */
+  --green: #15803D;        /* primary green */
+  --green-soft: #E7F0EA;   /* soft green tint */
+  --orange: #EA7A3B;       /* warm accent */
+  --orange-soft: #FBEADD;
+  --cream: #F4F1EA;        /* app background */
+  --earth: #8A6A4F;        /* earth tone */
+  --ink: #16201A;          /* near-black text */
+  --muted: #6B7770;        /* muted text */
+}
+html, body, #root {
+  height: 100%;
+}
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+/* Full-bleed app shell — respects device safe areas (notch / home indicator) */
+.app-shell {
+  width: 100%;
+  height: 100%;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  background: var(--cream);
+  overflow: hidden;
+  position: relative;
+}
+
+.app-routes {
+  width: 100%;
+  height: 100%;
+}
+
+.app-routes--tab-enter {
+  animation: tab-page-enter 0.36s ease forwards;
+}
+
+@keyframes tab-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Auth flow — full-bleed photo background on mobile, tablet, and desktop webview */
+.auth-background {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  overflow: hidden;
+  /* Extend photo under notch / home indicator; keep content in safe area */
+  margin-top: calc(-1 * env(safe-area-inset-top, 0px));
+  margin-right: calc(-1 * env(safe-area-inset-right, 0px));
+  margin-bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+  margin-left: calc(-1 * env(safe-area-inset-left, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+}
+.auth-background__layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.auth-background__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Fill the entire screen — photo edge-to-edge, no top/bottom bands */
+  object-fit: cover;
+  object-position: center center;
+}
+.auth-background__gradient-top,
+.auth-background__gradient-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.auth-background__gradient-top {
+  top: 0;
+  height: clamp(7rem, 20vh, 11rem);
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.38) 55%,
+    transparent 100%
+  );
+}
+.auth-background__gradient-bottom {
+  bottom: 0;
+  height: clamp(7rem, 20vh, 11rem);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.38) 55%,
+    transparent 100%
+  );
+}
+.auth-background__leaf {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  user-select: none;
+  object-fit: contain;
+  /* PNG alpha shows through; leaf tint is soft so the photo stays visible */
+  opacity: 0.42;
+}
+.auth-background__leaf--fern-top {
+  top: -0.5rem;
+  left: -1.25rem;
+  width: clamp(5.5rem, 22vw, 8.5rem);
+  transform: rotate(-28deg);
+}
+.auth-background__leaf--monstera-top {
+  top: -1rem;
+  right: -1.75rem;
+  width: clamp(6.5rem, 26vw, 10rem);
+  transform: rotate(18deg);
+}
+.auth-background__leaf--single-bottom {
+  bottom: 0.5rem;
+  right: -0.5rem;
+  width: clamp(4.5rem, 18vw, 7rem);
+  transform: rotate(12deg);
+  opacity: 0.36;
+}
+.auth-background__leaf--fern-bottom {
+  bottom: -0.75rem;
+  left: -1rem;
+  width: clamp(5rem, 20vw, 7.5rem);
+  transform: rotate(22deg) scaleX(-1);
+  opacity: 0.38;
+}
+@media (min-width: 640px) {
+  .auth-background__leaf {
+    opacity: 0.48;
+  }
+  .auth-background__leaf--single-bottom {
+    opacity: 0.4;
+  }
+  .auth-background__leaf--fern-bottom {
+    opacity: 0.42;
+  }
+}
+.auth-background__content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+/* Solid CTA on photo backgrounds — no see-through disabled state */
+.auth-background__content .auth-cta {
+  background-color: var(--forest);
+  opacity: 1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+.auth-background__content .auth-cta:hover:not(:disabled) {
+  background-color: #0a3d23;
+}
+.auth-background__content .auth-cta:disabled {
+  opacity: 1;
+  background-color: #3d6b52;
+  color: rgba(255, 255, 255, 0.75);
+}
+/* Hide scrollbars inside phone screens for a clean app feel */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+/* Reusable shimmer for skeleton/loading states */
+@keyframes shimmer {
+  0% { background-position: -468px 0; }
+  100% { background-position: 468px 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #eceae4 25%, #f6f4ef 50%, #eceae4 75%);
+  background-size: 936px 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+/* Strip Leaflet's default tooltip chrome so map pin labels use plain Tailwind styling */
+.map-pin-tooltip.leaflet-tooltip {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+.map-pin-tooltip.leaflet-tooltip::before {
+  display: none;
+}
