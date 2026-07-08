@@ -28,6 +28,23 @@ export class KnowledgeController {
   }
 
   @Public()
+  @Get('youtube')
+  @ApiOperation({ summary: 'Search agriculture YouTube videos' })
+  searchYouTube(
+    @Query('category') category?: string,
+    @Query('q') q?: string,
+  ) {
+    return this.service.searchYouTubeVideos(category, q);
+  }
+
+  @Public()
+  @Get('youtube/:videoId')
+  @ApiOperation({ summary: 'Get a single YouTube video by ID' })
+  getYouTubeVideo(@Param('videoId') videoId: string) {
+    return this.service.getYouTubeVideo(videoId);
+  }
+
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get a single article / video' })
   findOne(@Param('id') id: string) {
