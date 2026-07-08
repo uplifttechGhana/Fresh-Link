@@ -24,8 +24,8 @@ export interface GeminiCropAnalysis {
 }
 
 const MODEL_FALLBACKS = [
-  'gemini-2.0-flash',
   'gemini-2.5-flash',
+  'gemini-2.0-flash',
   'gemini-1.5-flash',
   'gemini-1.5-flash-8b',
 ];
@@ -73,11 +73,9 @@ export class GeminiService {
       configured: !!apiKey,
       model,
       modelsTried: models,
-      keyFormatOk: apiKey ? apiKey.startsWith('AIza') : false,
+      keyFormatOk: apiKey ? apiKey.startsWith('AIza') || apiKey.length >= 20 : false,
       hint: apiKey
-        ? apiKey.startsWith('AIza')
-          ? 'Crop scan is ready. Farmers can upload photos from Knowledge Hub → Scan Crop.'
-          : 'GEMINI_API_KEY is set but does not look like a Google AI Studio key (expected AIza…). Create one at https://aistudio.google.com/apikey'
+        ? 'Crop scan is ready. Farmers can upload photos from Knowledge Hub → Scan Crop.'
         : 'Set GEMINI_API_KEY in Railway/backend .env (Google AI Studio).',
     };
 
@@ -129,12 +127,6 @@ export class GeminiService {
     if (!apiKey) {
       throw new ServiceUnavailableException(
         'Crop scan is not configured. Ask an admin to set GEMINI_API_KEY.',
-      );
-    }
-
-    if (!apiKey.startsWith('AIza')) {
-      throw new ServiceUnavailableException(
-        'GEMINI_API_KEY looks invalid. Create a key at Google AI Studio (starts with AIza).',
       );
     }
 
