@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { Eye, EyeOff } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
 import { AuthBackground } from '../../components/ui/AuthBackground';
-import { useSendOtp } from '../../lib/hooks/useAuth';
-import { useOtpSession } from '../../lib/otpSessionStore';
+import { useLogin } from '../../lib/hooks/useAuth';
 import { useAuthStore } from '../../lib/authStore';
 
 const ROLE_HOME: Record<string, string> = {
@@ -17,13 +17,23 @@ const ROLE_HOME: Record<string, string> = {
   admin: '/admin/dashboard',
 };
 
+function parseLoginIdentifier(raw: string): { phone?: string; email?: string } {
+  const value = raw.trim();
+  if (value.includes('@')) {
+    return { email: value.toLowerCase() };
+  }
+  const digits = value.replace(/\s/g, '').replace(/^0/, '');
+  return { phone: `+233${digits}` };
+}
+
 export function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { t } = useTranslation();
-  const [phone, setPhone] = useState('');
-  const sendOtp = useSendOtp();
-  const setOtpSession = useOtpSession((s) => s.set);
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const login = useLogin();
   const { user, accessToken, guestRole, pendingRole } = useAuthStore();
   const setPendingRole = useAuthStore((s) => s.setPendingRole);
 
@@ -43,16 +53,17 @@ export function Login() {
     navigate('/role-select');
   };
 
-  const handleSendOtp = () => {
-    const digits = phone.replace(/\s/g, '').replace(/^0/, '');
-    const fullPhone = `+233${digits}`;
-    sendOtp.mutate({ phone: fullPhone, purpose: 'login' }, {
-      onSuccess: () => {
-        setOtpSession(fullPhone, 'login');
-        navigate(`/otp${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`);
+  const handleLogin = () => {
+    const payload = { ...parseLoginIdentifier(identifier), password };
+    login.mutate(payload, {
+      onSuccess: (data) => {
+        const home = ROLE_HOME[data.user.role] ?? '/buyer/home';
+        navigate(returnTo || home);
       },
     });
   };
+
+  const isEmail = identifier.includes('@');
 
   return (
     <AuthBackground>
@@ -73,24 +84,72 @@ export function Login() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-bold text-white mb-2">
-                {t('auth.phone')}
+                {t('auth.loginIdentifier')}
+              </label>
+              {isEmail ? (
+                <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
+                  <input
+                    type="email"
+                    className="flex-1 px-4 py-4 bg-transparent outline-none text-ink font-medium"
+                    placeholder={t('auth.emailPlaceholder')}
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                  />
+                </div>
+              ) : (
+                <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
+                  <div className="px-4 py-4 bg-gray-50 text-ink font-bold border-r border-gray-100 flex items-center">
+                    +233
+                  </div>
+                  <input
+                    type="tel"
+                    className="flex-1 px-4 py-4 bg-transparent outline-none text-ink font-medium"
+                    placeholder="00 000 0000"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                  />
+                </div>
+              )}
+              <p className="text-xs text-white/70 mt-2">
+                {t('auth.loginIdentifierHint')}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-white mb-2">
+                {t('auth.password')}
               </label>
               <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
-                <div className="px-4 py-4 bg-gray-50 text-ink font-bold border-r border-gray-100 flex items-center">
-                  +233
-                </div>
                 <input
-                  type="tel"
+                  type={showPassword ? 'text' : 'password'}
                   className="flex-1 px-4 py-4 bg-transparent outline-none text-ink font-medium"
-                  placeholder="00 000 0000"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={t('auth.passwordPlaceholder')}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="px-4 text-muted hover:text-ink transition-colors flex items-center justify-center"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
-            {sendOtp.isError && (
+
+            <div className="text-right">
+              <button
+                type="button"
+                className="text-sm text-white font-bold underline underline-offset-2"
+                onClick={() => navigate('/forgot-password')}
+              >
+                {t('auth.forgotPassword')}
+              </button>
+            </div>
+
+            {login.isError && (
               <p className="text-red-300 text-sm">
-                {(sendOtp.error as any)?.body?.message ?? 'Failed to send OTP. Please try again.'}
+                {(login.error as any)?.body?.message ?? 'Invalid credentials. Please try again.'}
               </p>
             )}
           </div>
@@ -112,10 +171,10 @@ export function Login() {
             size="lg"
             fullWidth
             className="auth-cta"
-            onClick={handleSendOtp}
-            disabled={!phone || sendOtp.isPending}
+            onClick={handleLogin}
+            disabled={!identifier || !password || login.isPending}
           >
-            {sendOtp.isPending ? t('common.loading') : 'Send PIN'}
+            {login.isPending ? t('common.loading') : t('auth.signIn')}
           </Button>
         </div>
       </div>

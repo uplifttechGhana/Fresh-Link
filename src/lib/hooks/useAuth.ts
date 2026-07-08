@@ -7,14 +7,15 @@ import type { OtpPurpose } from '../otpSessionStore';
 interface RegisterPayload {
   name: string;
   phone: string;
-  email?: string;
+  email: string;
   password: string;
   role: UserRole;
   language?: string;
 }
 
 interface LoginPayload {
-  phone: string;
+  phone?: string;
+  email?: string;
   password: string;
 }
 
@@ -35,9 +36,14 @@ interface OtpVerifyResponse extends AuthResponse {}
 // ── Register ─────────────────────────────────────────────────────────────────
 
 export function useRegister() {
+  const { setAuth } = useAuthStore();
   return useMutation({
     mutationFn: (payload: RegisterPayload) =>
-      api.post<{ message: string }>('/auth/register', payload),
+      api.post<AuthResponse>('/auth/register', payload),
+    onSuccess: (data) => {
+      setAuth(data.user, data.accessToken, data.refreshToken);
+      connectSocket(data.accessToken);
+    },
   });
 }
 

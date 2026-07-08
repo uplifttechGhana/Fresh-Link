@@ -20,6 +20,8 @@
     "build:deploy": "npm run build && npx prisma generate",
     "prisma:studio": "node_modules/.bin/prisma studio",
     "seed:produce": "npx ts-node --transpile-only prisma/seed-produce.ts",
+    "seed:railway": "bash scripts/seed-railway-produce.sh",
+    "migrate:railway": "bash scripts/migrate-local-to-railway.sh",
     "seed:produce:images": "npx ts-node --transpile-only prisma/seed-produce-images.ts",
     "test:sms": "npx ts-node --transpile-only scripts/test-at-sms.ts"
   },

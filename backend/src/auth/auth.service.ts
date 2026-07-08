@@ -29,8 +29,11 @@ export class AuthService {
   // ── Registration ──────────────────────────────────────────────────────────
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
-    if (existing) throw new ConflictException('Phone number already registered');
+    const existingPhone = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+    if (existingPhone) throw new ConflictException('Phone number already registered');
+
+    const existingEmail = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (existingEmail) throw new ConflictException('Email address already registered');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
@@ -42,6 +45,7 @@ export class AuthService {
         passwordHash,
         role: dto.role,
         language: dto.language ?? 'en',
+        isVerified: true,
       },
     });
 
@@ -53,10 +57,8 @@ export class AuthService {
       await this.prisma.wallet.create({ data: { userId: user.id } });
     }
 
-    // Send OTP for phone verification
-    await this.sendOtp(user.id, user.phone, OtpPurpose.registration);
-
-    return { message: 'Registration successful. OTP sent to your phone.' };
+    const tokens = this.generateTokens(user);
+    return { ...tokens, user: await this.fullUser(user.id) };
   }
 
   // ── Admin registration ────────────────────────────────────────────────────
@@ -209,7 +211,17 @@ export class AuthService {
   // ── Login ─────────────────────────────────────────────────────────────────
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+    const email = dto.email?.trim().toLowerCase();
+    const phone = dto.phone?.trim();
+
+    if (!email && !phone) {
+      throw new BadRequestException('Phone or email is required');
+    }
+
+    const user = email
+      ? await this.prisma.user.findUnique({ where: { email } })
+      : await this.prisma.user.findUnique({ where: { phone } });
+
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
     }

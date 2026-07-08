@@ -7,7 +7,6 @@ import { AuthBackground } from '../../components/ui/AuthBackground';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRegister } from '../../lib/hooks/useAuth';
 import { useAuthStore } from '../../lib/authStore';
-import { useOtpSession } from '../../lib/otpSessionStore';
 
 const ROLE_HOME: Record<string, string> = {
   buyer: '/buyer/home',
@@ -27,7 +26,6 @@ export function Register() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const register = useRegister();
   const { user, accessToken, pendingRole, guestRole } = useAuthStore();
-  const setOtpSession = useOtpSession((s) => s.set);
   const registerRole = pendingRole ?? guestRole ?? 'buyer';
 
   if (user && accessToken) {
@@ -93,8 +91,7 @@ export function Register() {
 
             <div>
               <label className="block text-sm font-bold text-white mb-1.5">
-                Email Address{' '}
-                <span className="text-white/70 font-normal">(Optional)</span>
+                Email Address
               </label>
               <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
                 <input
@@ -201,19 +198,18 @@ export function Register() {
                 {
                   name: fullName,
                   phone: fullPhone,
-                  email: email || undefined,
+                  email,
                   password,
                   role: registerRole,
                 },
                 {
-                  onSuccess: () => {
-                    setOtpSession(fullPhone, 'registration');
-                    navigate('/otp');
+                  onSuccess: (data) => {
+                    navigate(ROLE_HOME[data.user.role] ?? '/buyer/home');
                   },
                 },
               );
             }}
-            disabled={!phone || !password || !fullName || !agreeTerms || register.isPending}
+            disabled={!phone || !password || !fullName || !email || !agreeTerms || register.isPending}
           >
             {register.isPending ? 'Creating account…' : 'Create Account'}
           </Button>

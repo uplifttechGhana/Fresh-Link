@@ -3,3 +3,4 @@ dist/
 .env
 *.log
 coverage/
+prisma/local-to-railway.dump.sql

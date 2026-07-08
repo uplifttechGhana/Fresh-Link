@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import 'dotenv/config';
 import {
   GHANA_PRODUCE_CATALOG,
@@ -11,6 +12,44 @@ import {
 
 const prisma = new PrismaClient();
 const CLOUD_FOLDER = 'freshlink/produce';
+const DEMO_FARMER_PASSWORD = 'Freshlink1!';
+
+const DEMO_FARMERS = [
+  { name: 'Kwame Asante', phone: '+233501234501', farmName: 'Asante Farms', location: 'Kumasi' },
+  { name: 'Ama Mensah', phone: '+233501234502', farmName: 'Mensah Gardens', location: 'Accra' },
+  { name: 'Kofi Boateng', phone: '+233501234503', farmName: 'Boateng Orchard', location: 'Tamale' },
+  { name: 'Yaa Osei', phone: '+233501234504', farmName: 'Osei Greens', location: 'Cape Coast' },
+];
+
+async function ensureDemoFarmers() {
+  const farmerCount = await prisma.farmerProfile.count();
+  if (farmerCount > 0) {
+    console.log(`Found ${farmerCount} farmer profile(s) — skipping demo farmer creation.`);
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(DEMO_FARMER_PASSWORD, 12);
+
+  for (const demo of DEMO_FARMERS) {
+    await prisma.user.create({
+      data: {
+        role: UserRole.farmer,
+        name: demo.name,
+        phone: demo.phone,
+        passwordHash,
+        isVerified: true,
+        language: 'en',
+        farmerProfile: {
+          create: {
+            farmName: demo.farmName,
+            location: demo.location,
+          },
+        },
+      },
+    });
+    console.log(`Created demo farmer: ${demo.name} (${demo.phone})`);
+  }
+}
 
 function priceVariance(base: number, farmerIndex: number, itemIndex: number): number {
   const bump = ((farmerIndex + itemIndex) % 5) - 2;
@@ -37,6 +76,8 @@ async function buildCloudinaryImageMap() {
 }
 
 async function main() {
+  await ensureDemoFarmers();
+
   const farmers = await prisma.farmerProfile.findMany({
     include: { user: { select: { name: true } } },
     orderBy: { id: 'asc' },

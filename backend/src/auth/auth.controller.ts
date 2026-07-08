@@ -50,7 +50,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Login with phone + password' })
+  @ApiOperation({ summary: 'Login with phone or email + password' })
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto);
   }
