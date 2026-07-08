@@ -1,0 +1,9 @@
+backend
+android
+ios
+node_modules
+backend/node_modules
+.git
+*.md
+DOCUMENTATION.md
+PRODUCTION.md
