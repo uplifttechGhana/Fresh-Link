@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProduceDto, UpdateProduceDto, ProduceQueryDto } from './dto/produce.dto';
 import { DEFAULT_PRODUCE_CATEGORIES } from './produce.constants';
+import { assertPersistableMediaUrls, sanitizeMediaUrls } from '../common/utils/media-url.util';
 
 @Injectable()
 export class ProduceService {
@@ -11,8 +12,11 @@ export class ProduceService {
     const farmer = await this.prisma.farmerProfile.findUnique({ where: { userId } });
     if (!farmer) throw new ForbiddenException('Farmer profile not found');
 
+    assertPersistableMediaUrls(dto.images);
+    const images = sanitizeMediaUrls(dto.images);
+
     const produce = await this.prisma.produceListing.create({
-      data: { ...dto, farmerId: farmer.id },
+      data: { ...dto, images, farmerId: farmer.id },
     });
 
     // Record initial price
@@ -180,9 +184,18 @@ export class ProduceService {
     if (!produce) throw new NotFoundException('Produce not found');
     if (produce.farmer.userId !== userId) throw new ForbiddenException();
 
+    if (dto.images !== undefined) {
+      assertPersistableMediaUrls(dto.images);
+    }
+
+    const data = {
+      ...dto,
+      ...(dto.images !== undefined ? { images: sanitizeMediaUrls(dto.images) } : {}),
+    };
+
     const updated = await this.prisma.produceListing.update({
       where: { id: produceId },
-      data: dto,
+      data,
     });
 
     // Record price change

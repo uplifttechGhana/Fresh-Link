@@ -3,6 +3,7 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localh
 /** Resolve relative /uploads paths; leave Cloudinary and other absolute URLs as-is. */
 export function resolveMediaUrl(url?: string | null): string | null {
   if (!url) return null;
+  if (url.startsWith('blob:') || url.startsWith('data:')) return null;
   if (/^https?:\/\//i.test(url)) return url;
   if (url.startsWith('/')) {
     const base = API_BASE.replace(/\/$/, '');

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import {
   S3Client,
   PutObjectCommand,
@@ -148,31 +148,28 @@ export class StorageService {
     };
 
     const signature = this.signCloudinaryParams(params);
-    const dataUri = `data:${contentType};base64,${buffer.toString('base64')}`;
 
-    const body = new URLSearchParams({
-      file: dataUri,
-      api_key: this.cloudinaryApiKey,
-      timestamp: String(timestamp),
-      signature,
-      folder: cloudFolder,
-      public_id: publicId,
-    });
+    const form = new FormData();
+    form.append('file', new Blob([new Uint8Array(buffer)], { type: contentType }), 'upload.jpg');
+    form.append('api_key', this.cloudinaryApiKey);
+    form.append('timestamp', String(timestamp));
+    form.append('signature', signature);
+    form.append('folder', cloudFolder);
+    form.append('public_id', publicId);
 
-    const { data } = await axios.post(
+    const res = await fetch(
       `https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`,
-      body.toString(),
-      {
-        timeout: 30000,
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      },
+      { method: 'POST', body: form },
     );
 
-    if (!data?.secure_url) {
-      throw new Error('Cloudinary upload failed: no URL returned');
+    const data = (await res.json()) as { secure_url?: string; error?: { message?: string } };
+    if (!res.ok || !data?.secure_url) {
+      const msg = data?.error?.message ?? `Cloudinary upload failed (${res.status})`;
+      this.logger.error(`Cloudinary upload failed: ${msg}`);
+      throw new BadRequestException(msg);
     }
 
-    return data.secure_url as string;
+    return data.secure_url;
   }
 
   private signCloudinaryParams(params: Record<string, string | number>): string {

@@ -7,6 +7,8 @@ import { Button } from '../../components/ui/Button';
 import { useCreateProduce, useProduceCategories } from '../../lib/hooks/useProduce';
 import { mergeProduceCategories } from '../../lib/produceCategories';
 import { useUploadFile } from '../../lib/hooks/useStorage';
+import { resolveMediaUrl } from '../../lib/mediaUrl';
+import { filterPersistableMediaUrls } from '../../lib/mediaUrls';
 import { useNativeCamera } from '../../lib/hooks/useNativeCamera';
 import { useHaptics } from '../../lib/hooks/useHaptics';
 
@@ -31,28 +33,24 @@ export function AddProduce() {
   const [showCategories, setShowCategories] = useState(false);
   const [showUnits, setShowUnits] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const isFormValid = title.trim() !== '' && price.trim() !== '' && stock.trim() !== '';
 
   const handleAddPhoto = async () => {
     impact('light');
     setUploading(true);
+    setUploadError(null);
     try {
       const photo = await takePhoto('gallery');
       if (!photo) return;
 
-      // Upload directly to the backend; server saves to disk and returns a URL
-      try {
-        const url = await uploadFile.mutateAsync(
-          new File([photo.blob], 'photo.jpg', { type: 'image/jpeg' }),
-        );
-        setImages((prev) => [...prev, url]);
-      } catch {
-        // Network error or server not running — use a local object URL as preview
-        // (won't persist after page reload, but lets the farmer continue filling the form)
-        const localUrl = URL.createObjectURL(photo.blob);
-        setImages((prev) => [...prev, localUrl]);
-      }
+      const url = await uploadFile.mutateAsync(
+        new File([photo.blob], 'photo.jpg', { type: 'image/jpeg' }),
+      );
+      setImages((prev) => [...prev, url]);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Photo upload failed. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -61,6 +59,7 @@ export function AddProduce() {
   const handleSave = () => {
     if (!isFormValid) return;
     impact('medium');
+    const persistableImages = filterPersistableMediaUrls(images);
     createProduce.mutate(
       {
         title: title.trim(),
@@ -69,7 +68,7 @@ export function AddProduce() {
         unit,
         stock: parseInt(stock, 10),
         category,
-        images,
+        images: persistableImages,
       },
       {
         onSuccess: () => navigate('/farmer/produce'),
@@ -106,7 +105,11 @@ export function AddProduce() {
                   key={idx}
                   className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-2xl overflow-hidden relative"
                 >
-                  <img src={img} alt="Preview" className="w-full h-full object-cover" />
+                  <img
+                    src={resolveMediaUrl(img) ?? img}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
                   <button
                     onClick={() => setImages(images.filter((_, i) => i !== idx))}
                     className="absolute top-1 right-1 w-6 h-6 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-ink"
@@ -117,6 +120,9 @@ export function AddProduce() {
               ))}
             </div>
           </Card>
+          {uploadError && (
+            <p className="text-xs text-red-200 mt-2">{uploadError}</p>
+          )}
         </div>
 
         {/* Details Form */}

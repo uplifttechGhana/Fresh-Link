@@ -66,14 +66,18 @@ export class StorageController {
 
     const resolvedFolder = folderQuery ?? folder;
 
-    const url = await this.storage.save(
-      file.buffer,
-      file.originalname,
-      resolvedFolder,
-      file.mimetype,
-    );
-
-    return { url };
+    try {
+      const url = await this.storage.save(
+        file.buffer,
+        file.originalname,
+        resolvedFolder,
+        file.mimetype,
+      );
+      return { url };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Upload failed';
+      throw new BadRequestException(msg);
+    }
   }
 
   @Public()

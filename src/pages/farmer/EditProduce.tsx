@@ -6,6 +6,8 @@ import { Button } from '../../components/ui/Button';
 import { useMyListings, useUpdateProduce, useProduceCategories } from '../../lib/hooks/useProduce';
 import { mergeProduceCategories } from '../../lib/produceCategories';
 import { useUploadFile } from '../../lib/hooks/useStorage';
+import { resolveMediaUrl } from '../../lib/mediaUrl';
+import { filterPersistableMediaUrls } from '../../lib/mediaUrls';
 
 const UNITS = ['kg', 'g', 'lb', 'crate', 'box', 'bag', 'bunch', 'dozen', 'litre'];
 
@@ -32,6 +34,7 @@ export function EditProduce() {
   const [showCategories, setShowCategories] = useState(false);
   const [showUnits, setShowUnits] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (produceItem) {
@@ -51,16 +54,12 @@ export function EditProduce() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setUploadError(null);
     try {
-      // Upload directly to the backend; server saves to disk and returns a URL
-      try {
-        const url = await uploadFile.mutateAsync(file);
-        setImages((prev) => [...prev, url]);
-      } catch {
-        // Fallback: use a local object URL as a preview while the form is open
-        const localUrl = URL.createObjectURL(file);
-        setImages((prev) => [...prev, localUrl]);
-      }
+      const url = await uploadFile.mutateAsync(file);
+      setImages((prev) => [...prev, url]);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Photo upload failed. Please try again.');
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -78,7 +77,7 @@ export function EditProduce() {
         unit,
         stock: parseInt(stock, 10),
         category,
-        images,
+        images: filterPersistableMediaUrls(images),
       },
       { onSuccess: () => navigate('/farmer/produce') },
     );
@@ -119,7 +118,11 @@ export function EditProduce() {
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoSelect} />
             {images.map((img, idx) => (
               <div key={idx} className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-2xl overflow-hidden relative">
-                <img src={img} alt="Preview" className="w-full h-full object-cover mix-blend-multiply" />
+                <img
+                  src={resolveMediaUrl(img) ?? img}
+                  alt="Preview"
+                  className="w-full h-full object-cover mix-blend-multiply"
+                />
                 <button
                   onClick={() => setImages(images.filter((_, i) => i !== idx))}
                   className="absolute top-1 right-1 w-6 h-6 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-ink"
