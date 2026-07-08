@@ -66,6 +66,7 @@ import { Payments } from './pages/admin/Payments';
 import { Insights } from './pages/farmer/Insights';
 import { KnowledgeHub } from './pages/farmer/KnowledgeHub';
 import { VideoPlayer } from './pages/farmer/VideoPlayer';
+import { CropScan } from './pages/farmer/CropScan';
 import { FarmerFunding } from './pages/farmer/Funding';
 import { InvestorDashboard } from './pages/investor/Dashboard';
 import { Invest } from './pages/investor/Invest';
@@ -180,6 +181,8 @@ function AppRoutes() {
             <Route path="/farmer/transport/request" element={<ProtectedRoute roles={['farmer']}><RequestTransport /></ProtectedRoute>} />
             <Route path="/farmer/insights" element={<ProtectedRoute roles={['farmer']}><Insights /></ProtectedRoute>} />
             <Route path="/farmer/knowledge" element={<ProtectedRoute roles={['farmer']}><KnowledgeHub /></ProtectedRoute>} />
+            <Route path="/farmer/knowledge/scan" element={<ProtectedRoute roles={['farmer']}><CropScan /></ProtectedRoute>} />
+            <Route path="/farmer/knowledge/scan/:id" element={<ProtectedRoute roles={['farmer']}><CropScan /></ProtectedRoute>} />
             <Route path="/farmer/knowledge/video/:id" element={<ProtectedRoute roles={['farmer']}><VideoPlayer /></ProtectedRoute>} />
             <Route path="/farmer/funding" element={<ProtectedRoute roles={['farmer']}><FarmerFunding /></ProtectedRoute>} />
 

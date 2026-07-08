@@ -21,6 +21,7 @@ import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { KnowledgeModule } from './knowledge/knowledge.module';
 import { SmsModule } from './sms/sms.module';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { CropScanModule } from './crop-scan/crop-scan.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { IntegrationsModule } from './integrations/integrations.module';
     KnowledgeModule,
     SmsModule,
     IntegrationsModule,
+    CropScanModule,
   ],
 })
 export class AppModule {}

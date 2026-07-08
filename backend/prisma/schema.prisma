@@ -119,6 +119,13 @@ enum UssdSessionStatus {
   timeout
 }
 
+enum CropHealthStatus {
+  healthy
+  possible_disease
+  possible_pest
+  unclear
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Core user + profiles
 // ─────────────────────────────────────────────────────────────────────────────
@@ -160,6 +167,7 @@ model User {
   payoutAccounts   PayoutAccount[]
   withdrawalRequests WithdrawalRequest[]
   disputesReported Dispute[]            @relation("DisputeReporter")
+  cropScans        CropScan[]
 
   @@map("users")
 }
@@ -618,6 +626,27 @@ model KnowledgeArticle {
   createdAt   DateTime @default(now())
 
   @@map("knowledge_articles")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI crop scan (Gemini)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model CropScan {
+  id           String            @id @default(uuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  imageUrl     String
+  crop         String?
+  confidence   Float?
+  healthStatus CropHealthStatus?
+  diseasesJson Json?
+  advice       String?
+  rawResponse  Json?
+  createdAt    DateTime          @default(now())
+
+  @@index([userId, createdAt])
+  @@map("crop_scans")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

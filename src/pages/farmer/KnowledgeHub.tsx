@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
-import { Play, BookOpen, Search, Loader2 } from 'lucide-react';
+import { Play, BookOpen, Search, Loader2, ScanLine } from 'lucide-react';
 import {
   useKnowledgeArticles,
   useKnowledgeCategories,
@@ -29,6 +29,21 @@ export function KnowledgeHub() {
       <TopBar title="Knowledge Hub" showBack />
 
       <div className="flex-1 overflow-y-auto px-6 pt-4 pb-8">
+        <Card
+          className="p-4 mb-6 cursor-pointer bg-gradient-to-r from-green to-emerald-600 text-white border-0 hover:shadow-lg transition-shadow"
+          onClick={() => navigate('/farmer/knowledge/scan')}
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-white/20">
+              <ScanLine size={22} />
+            </div>
+            <div>
+              <p className="font-bold">Scan your crop</p>
+              <p className="text-xs text-white/90">AI health check from a photo</p>
+            </div>
+          </div>
+        </Card>
+
         <div className="flex items-center bg-white rounded-full px-4 h-12 shadow-sm border border-gray-100 mb-6 focus-within:ring-2 focus-within:ring-green-500">
           <Search size={20} className="text-muted" />
           <input

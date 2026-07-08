@@ -3,6 +3,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { AfricasTalkingSmsService } from '../sms/africas-talking-sms.service';
 import { UssdService } from '../ussd/ussd.service';
+import { GeminiService } from '../crop-scan/gemini.service';
 import type { Request } from 'express';
 
 function publicApiBase(req?: Request): string | null {
@@ -27,6 +28,7 @@ export class IntegrationsController {
   constructor(
     private sms: AfricasTalkingSmsService,
     private ussd: UssdService,
+    private gemini: GeminiService,
   ) {}
 
   @Public()
@@ -49,5 +51,12 @@ export class IntegrationsController {
           : 'In AT dashboard set USSD Callback URL to https://YOUR_PUBLIC_DOMAIN/api/v1/ussd/callback (use ngrok for local dev).',
       },
     };
+  }
+
+  @Public()
+  @Get('gemini/status')
+  @ApiOperation({ summary: 'Google Gemini crop scan integration status' })
+  getGeminiStatus() {
+    return this.gemini.getStatus();
   }
 }

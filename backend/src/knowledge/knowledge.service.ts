@@ -62,6 +62,30 @@ export class KnowledgeService {
     return rows.filter((r) => r.category).map((r) => ({ name: r.category as string, count: r._count.id }));
   }
 
+  async findRelated(crop?: string, diseaseTerms: string[] = [], limit = 5) {
+    const needles = [
+      crop?.trim(),
+      ...diseaseTerms.map((t) => t.trim()),
+    ]
+      .filter((term): term is string => !!term && term.length > 1 && term.toLowerCase() !== 'unknown')
+      .map((term) => term.toLowerCase());
+
+    const unique = [...new Set(needles)];
+    if (unique.length === 0) return [];
+
+    return this.prisma.knowledgeArticle.findMany({
+      where: {
+        OR: unique.flatMap((term) => [
+          { title: { contains: term, mode: 'insensitive' } },
+          { body: { contains: term, mode: 'insensitive' } },
+          { category: { contains: term, mode: 'insensitive' } },
+        ]),
+      },
+      take: limit,
+      orderBy: { publishedAt: 'desc' },
+    });
+  }
+
   async searchYouTubeVideos(category?: string, q?: string, maxResults = 12): Promise<YouTubeVideoDto[]> {
     const searchQuery = buildSearchQuery(category, q);
     const apiKey = this.config.get<string>('YOUTUBE_API_KEY');
