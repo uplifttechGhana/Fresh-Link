@@ -69,18 +69,37 @@ export function useNativeCamera() {
 
 function pickFromGallery(): Promise<NativePhoto | null> {
   return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value: NativePhoto | null) => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('focus', onWindowFocus);
+      resolve(value);
+    };
+
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
 
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return resolve(null);
-      const dataUrl = await readAsDataUrl(file);
-      resolve({ dataUrl, blob: file });
+    const onWindowFocus = () => {
+      // Browsers don't reliably fire cancel — resolve if no file was picked.
+      setTimeout(() => {
+        if (!input.files?.length) finish(null);
+      }, 400);
     };
 
-    input.oncancel = () => resolve(null);
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return finish(null);
+      try {
+        const dataUrl = await readAsDataUrl(file);
+        finish({ dataUrl, blob: file });
+      } catch {
+        finish(null);
+      }
+    };
+
+    window.addEventListener('focus', onWindowFocus, { once: true });
     input.click();
   });
 }

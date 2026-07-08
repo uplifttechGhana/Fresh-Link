@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, ChevronDown, X, Loader2 } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
@@ -11,11 +11,13 @@ import { resolveMediaUrl } from '../../lib/mediaUrl';
 import { filterPersistableMediaUrls } from '../../lib/mediaUrls';
 import { useNativeCamera } from '../../lib/hooks/useNativeCamera';
 import { useHaptics } from '../../lib/hooks/useHaptics';
+import { isNative } from '../../lib/native';
 
 const UNITS = ['kg', 'g', 'lb', 'crate', 'box', 'bag', 'bunch', 'dozen', 'litre'];
 
 export function AddProduce() {
   const navigate = useNavigate();
+  const fileRef = useRef<HTMLInputElement>(null);
   const createProduce = useCreateProduce();
   const uploadFile = useUploadFile();
   const { takePhoto } = useNativeCamera();
@@ -37,23 +39,44 @@ export function AddProduce() {
 
   const isFormValid = title.trim() !== '' && price.trim() !== '' && stock.trim() !== '';
 
-  const handleAddPhoto = async () => {
+  const handleAddPhoto = () => {
     impact('light');
+    setUploadError(null);
+    if (isNative) {
+      void handleNativePhoto();
+    } else {
+      fileRef.current?.click();
+    }
+  };
+
+  const uploadSelectedFile = async (file: File) => {
     setUploading(true);
     setUploadError(null);
     try {
-      const photo = await takePhoto('gallery');
-      if (!photo) return;
-
-      const url = await uploadFile.mutateAsync(
-        new File([photo.blob], 'photo.jpg', { type: 'image/jpeg' }),
-      );
+      const url = await uploadFile.mutateAsync(file);
       setImages((prev) => [...prev, url]);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Photo upload failed. Please try again.');
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleNativePhoto = async () => {
+    const photo = await takePhoto('gallery');
+    if (!photo) return;
+    await uploadSelectedFile(
+      photo.blob instanceof File
+        ? photo.blob
+        : new File([photo.blob], 'photo.jpg', { type: 'image/jpeg' }),
+    );
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    void uploadSelectedFile(file);
   };
 
   const handleSave = () => {
@@ -83,6 +106,13 @@ export function AddProduce() {
       <div className="flex-1 overflow-y-auto px-6 pt-4 pb-28 space-y-6">
         {/* Photo Upload */}
         <div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoSelect}
+          />
           <h3 className="font-bold text-ink mb-3">Product Photos</h3>
           <Card className="p-4 bg-green">
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
@@ -92,7 +122,10 @@ export function AddProduce() {
                 className="w-24 h-24 flex-shrink-0 bg-white/10 border-2 border-dashed border-white/50 rounded-2xl flex flex-col items-center justify-center text-white hover:border-white transition-colors"
               >
                 {uploading ? (
-                  <Loader2 size={24} className="animate-spin" />
+                  <>
+                    <Loader2 size={24} className="animate-spin" />
+                    <span className="text-[10px] font-bold mt-1">Uploading…</span>
+                  </>
                 ) : (
                   <>
                     <Camera size={24} className="mb-1" />

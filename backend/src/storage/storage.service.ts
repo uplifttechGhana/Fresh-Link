@@ -5,7 +5,7 @@ import {
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
@@ -148,28 +148,46 @@ export class StorageService {
     };
 
     const signature = this.signCloudinaryParams(params);
+    const dataUri = `data:${contentType};base64,${buffer.toString('base64')}`;
 
-    const form = new FormData();
-    form.append('file', new Blob([new Uint8Array(buffer)], { type: contentType }), 'upload.jpg');
-    form.append('api_key', this.cloudinaryApiKey);
-    form.append('timestamp', String(timestamp));
-    form.append('signature', signature);
-    form.append('folder', cloudFolder);
-    form.append('public_id', publicId);
+    const body = new URLSearchParams({
+      file: dataUri,
+      api_key: this.cloudinaryApiKey,
+      timestamp: String(timestamp),
+      signature,
+      folder: cloudFolder,
+      public_id: publicId,
+    });
 
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`,
-      { method: 'POST', body: form },
-    );
+    try {
+      const { data } = await axios.post(
+        `https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`,
+        body.toString(),
+        {
+          timeout: 45000,
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+        },
+      );
 
-    const data = (await res.json()) as { secure_url?: string; error?: { message?: string } };
-    if (!res.ok || !data?.secure_url) {
-      const msg = data?.error?.message ?? `Cloudinary upload failed (${res.status})`;
-      this.logger.error(`Cloudinary upload failed: ${msg}`);
-      throw new BadRequestException(msg);
+      if (!data?.secure_url) {
+        const msg = data?.error?.message ?? 'Cloudinary upload failed: no URL returned';
+        this.logger.error(`Cloudinary upload failed: ${msg}`);
+        throw new BadRequestException(msg);
+      }
+
+      return data.secure_url as string;
+    } catch (err) {
+      if (isAxiosError(err)) {
+        const msg =
+          (err.response?.data as { error?: { message?: string } } | undefined)?.error?.message ??
+          err.message;
+        this.logger.error(`Cloudinary upload failed: ${msg}`);
+        throw new BadRequestException(msg);
+      }
+      throw err;
     }
-
-    return data.secure_url;
   }
 
   private signCloudinaryParams(params: Record<string, string | number>): string {

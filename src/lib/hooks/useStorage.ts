@@ -1,4 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
+import { compressImageFile } from '../compressImage';
+
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 function getApiBase(): string {
   return (
@@ -46,24 +49,55 @@ export function resolveMediaUrl(url: string): string {
  * Returns a persistable Cloudinary or /uploads URL.
  */
 export async function uploadFile(file: File, folder = 'produce'): Promise<string> {
+  const prepared = await compressImageFile(file);
+
   const doUpload = async (token: string | null) => {
     const form = new FormData();
     form.append('folder', folder);
-    form.append('file', file);
+    form.append('file', prepared);
 
-    return fetch(`${getApiBase()}/api/v1/storage/upload?folder=${encodeURIComponent(folder)}`, {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: form,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+
+    try {
+      return await fetch(
+        `${getApiBase()}/api/v1/storage/upload?folder=${encodeURIComponent(folder)}`,
+        {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: form,
+          signal: controller.signal,
+        },
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
   };
 
   let token = getAuthToken();
-  let res = await doUpload(token);
+  let res: Response;
+
+  try {
+    res = await doUpload(token);
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Upload timed out. Check your connection and try again.');
+    }
+    throw err;
+  }
 
   if (res.status === 401) {
     token = await refreshAuthToken();
-    if (token) res = await doUpload(token);
+    if (token) {
+      try {
+        res = await doUpload(token);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          throw new Error('Upload timed out. Check your connection and try again.');
+        }
+        throw err;
+      }
+    }
   }
 
   if (!res.ok) {
