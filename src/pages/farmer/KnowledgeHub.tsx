@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
-import { Play, BookOpen, Search, Loader2, ScanLine } from 'lucide-react';
+import { Play, BookOpen, Search, Loader2 } from 'lucide-react';
+import cropScannerIcon from '../../assets/icons/crop-scanner.png';
+import cropScanSoilBg from '../../assets/photos/crop-scan-soil.jpg';
 import {
   useKnowledgeArticles,
   useKnowledgeCategories,
@@ -30,16 +32,24 @@ export function KnowledgeHub() {
 
       <div className="flex-1 overflow-y-auto px-6 pt-4 pb-8">
         <Card
-          className="p-4 mb-6 cursor-pointer bg-gradient-to-r from-green to-emerald-600 text-white border-0 hover:shadow-lg transition-shadow"
+          leaves={false}
+          className="relative overflow-hidden p-4 mb-6 cursor-pointer border-0 bg-transparent hover:shadow-lg transition-shadow min-h-[5.5rem]"
           onClick={() => navigate('/farmer/knowledge/scan')}
         >
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-white/20">
-              <ScanLine size={22} />
+          <img
+            src={cropScanSoilBg}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/40" aria-hidden />
+          <div className="relative flex items-center gap-3 text-white">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/90 p-2 shadow-sm">
+              <img src={cropScannerIcon} alt="" className="h-7 w-7 object-contain" />
             </div>
             <div>
-              <p className="font-bold">Scan your crop</p>
-              <p className="text-xs text-white/90">AI health check from a photo</p>
+              <p className="font-bold drop-shadow-sm">Scan your crop</p>
+              <p className="text-xs text-white/90 drop-shadow-sm">AI health check from a photo</p>
             </div>
           </div>
         </Card>
