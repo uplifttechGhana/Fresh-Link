@@ -20,7 +20,8 @@ export class UssdService {
   constructor(private prisma: PrismaService) {}
 
   getShortcode() {
-    return process.env.AFRICASTALKING_SHORTCODE?.trim() || '*384*12345#';
+    const raw = process.env.AFRICASTALKING_SHORTCODE?.trim() || '*384*45670#';
+    return raw.endsWith('#') ? raw : `${raw}#`;
   }
 
   async handleRequest(params: {
