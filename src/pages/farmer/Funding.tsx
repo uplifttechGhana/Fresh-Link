@@ -6,6 +6,14 @@ import { Sheet } from '../../components/ui/Sheet';
 import { Sprout, CheckCircle2 } from 'lucide-react';
 import { useMyFundingRequests, useCreateFundingRequest, FundingRequest } from '../../lib/hooks/useFunding';
 
+function formatApiError(err: unknown): string {
+  const body = (err as { body?: { message?: string | string[] } })?.body;
+  const message = body?.message;
+  if (Array.isArray(message)) return message.join(', ');
+  if (typeof message === 'string') return message;
+  return 'Submission failed. Try again.';
+}
+
 export function FarmerFunding() {
   const { data: requests = [], isLoading } = useMyFundingRequests();
   const createRequest = useCreateFundingRequest();
@@ -132,7 +140,7 @@ export function FarmerFunding() {
 
           {createRequest.isError && (
             <p className="text-red-500 text-sm text-center">
-              {(createRequest.error as any)?.body?.message ?? 'Submission failed. Try again.'}
+              {formatApiError(createRequest.error)}
             </p>
           )}
 

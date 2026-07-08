@@ -1,21 +1,15 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { InvestorService } from './investor.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
-import { IsNumber, IsString, IsOptional, Min } from 'class-validator';
+import { IsNumber, IsString, Min } from 'class-validator';
+import { CreateFundingRequestDto } from './dto/create-funding-request.dto';
 
 class CreateInvestmentDto {
   @IsString() requestId: string;
   @IsNumber() @Min(1) amount: number;
-}
-
-class CreateFundingRequestDto {
-  @IsString() title: string;
-  @IsString() @IsOptional() description?: string;
-  @IsNumber() @Min(1) goal: number;
-  @IsString() @IsOptional() deadline?: string;
 }
 
 @ApiTags('investor')
@@ -51,7 +45,7 @@ export class InvestorController {
   @Public()
   @Get('funding-requests/:id')
   @ApiOperation({ summary: 'Get a funding request detail' })
-  getFundingRequest(@Param('id') id: string) {
+  getFundingRequest(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.getFundingRequest(id);
   }
 

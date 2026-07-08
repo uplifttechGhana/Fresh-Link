@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateFundingRequestDto } from './dto/create-funding-request.dto';
 
 @Injectable()
 export class InvestorService {
@@ -92,15 +93,30 @@ export class InvestorService {
     });
   }
 
-  async createFundingRequest(userId: string, dto: any) {
+  async createFundingRequest(userId: string, dto: CreateFundingRequestDto) {
+    const deadline = this.parseDeadline(dto.deadline);
+
     return this.prisma.farmerFundingRequest.create({
       data: {
         farmerId: userId,
-        title: dto.title,
-        description: dto.description,
+        title: dto.title.trim(),
+        description: dto.description?.trim() || null,
         goal: dto.goal,
-        deadline: dto.deadline,
+        deadline,
       },
     });
+  }
+
+  /** HTML date inputs send YYYY-MM-DD; Prisma DateTime needs a full ISO value. */
+  private parseDeadline(raw?: string): Date | undefined {
+    const value = raw?.trim();
+    if (!value) return undefined;
+
+    const iso = value.includes('T') ? value : `${value}T23:59:59.999Z`;
+    const deadline = new Date(iso);
+    if (Number.isNaN(deadline.getTime())) {
+      throw new BadRequestException('Invalid deadline date');
+    }
+    return deadline;
   }
 }

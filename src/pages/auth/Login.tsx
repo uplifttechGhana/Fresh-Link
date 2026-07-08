@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { AuthBackground } from '../../components/ui/AuthBackground';
 import { useLogin } from '../../lib/hooks/useAuth';
 import { useAuthStore } from '../../lib/authStore';
+import { normalizeGhanaPhone } from '../../lib/phone';
 
 const ROLE_HOME: Record<string, string> = {
   buyer: '/buyer/home',
@@ -22,8 +23,7 @@ function parseLoginIdentifier(raw: string): { phone?: string; email?: string } {
   if (value.includes('@')) {
     return { email: value.toLowerCase() };
   }
-  const digits = value.replace(/\s/g, '').replace(/^0/, '');
-  return { phone: `+233${digits}` };
+  return { phone: normalizeGhanaPhone(value) };
 }
 
 export function Login() {

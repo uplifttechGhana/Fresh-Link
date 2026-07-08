@@ -1,9 +1,9 @@
 import { Controller, Post, Body, Get, Param, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
+import { AdminRegisterDto } from './dto/admin-register.dto';
 import { LoginDto } from './dto/login.dto';
 import { SendOtpDto, VerifyOtpDto } from './dto/verify-otp.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/reset-password.dto';
@@ -11,13 +11,6 @@ import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { OtpPurpose } from '@prisma/client';
 import { Throttle } from '@nestjs/throttler';
-
-class AdminRegisterDto extends RegisterDto {
-  @ApiProperty({ description: 'Secret setup code from ADMIN_SETUP_CODE env var' })
-  @IsString()
-  @IsNotEmpty()
-  setupCode: string;
-}
 
 @ApiTags('auth')
 @Controller('auth')

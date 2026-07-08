@@ -8,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
+import { AdminRegisterDto } from './dto/admin-register.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -15,6 +16,7 @@ import { OtpPurpose, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
 import { AfricasTalkingSmsService } from '../sms/africas-talking-sms.service';
+import { ghanaPhoneLookupVariants, normalizeGhanaPhone } from '../common/utils/phone.util';
 
 @Injectable()
 export class AuthService {
@@ -63,13 +65,18 @@ export class AuthService {
 
   // ── Admin registration ────────────────────────────────────────────────────
 
-  async registerAdmin(dto: RegisterDto & { setupCode: string }) {
+  async registerAdmin(dto: AdminRegisterDto) {
     const expected = process.env.ADMIN_SETUP_CODE;
     if (!expected || dto.setupCode !== expected) {
       throw new UnauthorizedException('Invalid admin setup code');
     }
 
-    const existing = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+    const phone = normalizeGhanaPhone(dto.phone);
+    const email =
+      dto.email?.trim().toLowerCase() ??
+      `admin+${phone.replace(/\D/g, '')}@freshlink.local`;
+
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) {
       // Phone already registered — just promote to admin and return tokens
       const promoted =
@@ -82,12 +89,15 @@ export class AuthService {
       return { ...this.generateTokens(promoted), user: await this.fullUser(promoted.id) };
     }
 
+    const existingEmail = await this.prisma.user.findUnique({ where: { email } });
+    if (existingEmail) throw new ConflictException('Email address already registered');
+
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const user = await this.prisma.user.create({
       data: {
         name: dto.name,
-        phone: dto.phone,
-        email: dto.email,
+        phone,
+        email,
         passwordHash,
         role: 'admin',
         language: dto.language ?? 'en',
@@ -220,7 +230,7 @@ export class AuthService {
 
     const user = email
       ? await this.prisma.user.findUnique({ where: { email } })
-      : await this.prisma.user.findUnique({ where: { phone } });
+      : await this.findUserByPhone(phone!);
 
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
@@ -283,6 +293,13 @@ export class AuthService {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  private async findUserByPhone(raw: string) {
+    const variants = ghanaPhoneLookupVariants(raw);
+    return this.prisma.user.findFirst({
+      where: { phone: { in: variants } },
+    });
+  }
 
   private generateTokens(user: User) {
     const payload = { sub: user.id, phone: user.phone, role: user.role };

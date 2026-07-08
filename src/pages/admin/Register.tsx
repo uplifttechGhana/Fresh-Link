@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, Eye, EyeOff, Loader2, KeyRound } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useAuthStore, AuthUser } from '../../lib/authStore';
+import { normalizeGhanaPhone } from '../../lib/phone';
 
 interface AdminRegisterResponse {
   accessToken: string;
@@ -28,13 +29,6 @@ export function AdminRegister() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const normalisePhone = (raw: string) => {
-    const digits = raw.replace(/\D/g, '');
-    if (digits.startsWith('0')) return `+233${digits.slice(1)}`;
-    if (digits.startsWith('233')) return `+${digits}`;
-    return raw.startsWith('+') ? raw : `+${digits}`;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -43,8 +37,8 @@ export function AdminRegister() {
       setError('All fields are required.');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
 
@@ -52,10 +46,9 @@ export function AdminRegister() {
     try {
       const res = await api.post<AdminRegisterResponse>('/auth/admin/register', {
         name: name.trim(),
-        phone: normalisePhone(phone.trim()),
+        phone: normalizeGhanaPhone(phone.trim()),
         password,
         setupCode: setupCode.trim(),
-        role: 'admin',
         language: 'en',
       });
 
@@ -125,7 +118,7 @@ export function AdminRegister() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 6 characters"
+                placeholder="Min. 8 characters"
                 autoComplete="new-password"
                 className="w-full bg-white rounded-xl px-4 py-3 pr-12 text-sm font-medium text-ink shadow-sm border border-gray-100 outline-none focus:ring-2 focus:ring-green-500"
               />
