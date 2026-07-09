@@ -7,15 +7,25 @@ interface TopBarProps {
   rightAction?: 'search' | 'more' | 'bookmark' | 'skip' | 'messages' | 'none';
   onRightAction?: () => void;
   transparent?: boolean;
+  /** White text/icons for use on photo backgrounds */
+  light?: boolean;
 }
 export function TopBar({
   title,
   showBack = false,
   rightAction = 'none',
   onRightAction,
-  transparent = false
+  transparent = false,
+  light = false,
 }: TopBarProps) {
   const navigate = useNavigate();
+  const titleClass = light ? 'text-white drop-shadow-sm' : 'text-ink';
+  const backClass = light
+    ? 'bg-white/20 backdrop-blur-sm text-white hover:bg-white/30'
+    : 'bg-white shadow-sm text-ink hover:bg-gray-50';
+  const actionClass = light
+    ? 'bg-white/20 backdrop-blur-sm text-white'
+    : 'bg-white shadow-sm text-ink';
   return (
     <div
       className={`flex flex-shrink-0 items-center justify-between px-6 py-4 ${transparent ? 'bg-transparent' : 'bg-cream/80 backdrop-blur-md'} z-30 relative`}>
@@ -24,7 +34,7 @@ export function TopBar({
         {showBack &&
         <button
           onClick={() => navigate(-1)}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-ink hover:bg-gray-50 transition-colors">
+          className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${backClass}`}>
           
             <ChevronLeft size={20} strokeWidth={2.5} />
           </button>
@@ -32,7 +42,7 @@ export function TopBar({
       </div>
 
       {title &&
-      <h1 className="font-display font-bold text-lg text-ink truncate max-w-[200px]">
+      <h1 className={`font-display font-bold text-lg truncate max-w-[200px] ${titleClass}`}>
           {title}
         </h1>
       }
@@ -41,7 +51,7 @@ export function TopBar({
         {rightAction === 'search' &&
         <button
           onClick={onRightAction}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-ink">
+          className={`w-10 h-10 flex items-center justify-center rounded-full ${actionClass}`}>
           
             <Search size={20} />
           </button>
@@ -49,7 +59,7 @@ export function TopBar({
         {rightAction === 'more' &&
         <button
           onClick={onRightAction}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-ink">
+          className={`w-10 h-10 flex items-center justify-center rounded-full ${actionClass}`}>
           
             <MoreHorizontal size={20} />
           </button>
@@ -57,7 +67,7 @@ export function TopBar({
         {rightAction === 'bookmark' &&
         <button
           onClick={onRightAction}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-ink">
+          className={`w-10 h-10 flex items-center justify-center rounded-full ${actionClass}`}>
           
             <Bookmark size={20} />
           </button>
@@ -65,7 +75,7 @@ export function TopBar({
         {rightAction === 'messages' &&
         <button
           onClick={onRightAction}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm text-ink">
+          className={`w-10 h-10 flex items-center justify-center rounded-full ${actionClass}`}>
           
             <MessageCircle size={20} />
           </button>
@@ -73,7 +83,7 @@ export function TopBar({
         {rightAction === 'skip' &&
         <button
           onClick={onRightAction}
-          className="text-green font-bold text-sm">
+          className={light ? 'text-white font-bold text-sm drop-shadow-sm' : 'text-green font-bold text-sm'}>
           
             Skip
           </button>

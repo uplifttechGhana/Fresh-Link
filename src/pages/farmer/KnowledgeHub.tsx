@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { Play, BookOpen, Search, Loader2 } from 'lucide-react';
-import cropScannerIcon from '../../assets/icons/crop-scanner.png';
+import cropScannerIcon from '../../assets/icons/crop-scanner.gif';
 import cropScanSoilBg from '../../assets/photos/crop-scan-soil.jpg';
 import {
   useKnowledgeArticles,

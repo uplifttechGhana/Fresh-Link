@@ -1,9 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Camera,
   Loader2,
-  ScanLine,
   AlertTriangle,
   BookOpen,
   Play,
@@ -18,6 +16,8 @@ import { resolveMediaUrl } from '../../lib/mediaUrl';
 import { useNativeCamera } from '../../lib/hooks/useNativeCamera';
 import { useHaptics } from '../../lib/hooks/useHaptics';
 import { isNative } from '../../lib/native';
+import cropScannerIcon from '../../assets/icons/crop-scanner.gif';
+import cropScanFieldBg from '../../assets/photos/crop-scan-field.png';
 import {
   useCropScan,
   useCropScanHistory,
@@ -27,6 +27,8 @@ import {
   type CropScanResult,
 } from '../../lib/hooks/useCropScan';
 import { toYouTubeRouteId } from '../../lib/hooks/useKnowledge';
+
+const glassCard = 'bg-white/92 backdrop-blur-md border border-white/40 shadow-lg';
 
 export function CropScan() {
   const navigate = useNavigate();
@@ -106,24 +108,30 @@ export function CropScan() {
     : previewUrl;
 
   return (
-    <div className="w-full h-full bg-cream flex flex-col">
-      <TopBar title="Crop Scan" showBack />
+    <div className="relative w-full h-full flex flex-col overflow-hidden">
+      <img
+        src={cropScanFieldBg}
+        alt=""
+        aria-hidden
+        className="absolute inset-0 h-full w-full object-cover object-center"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-black/70" aria-hidden />
 
-      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-8">
-        <Card className="p-5 mb-6 bg-gradient-to-br from-green-50 to-white border-green-100">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-green text-white shrink-0">
-              <ScanLine size={22} />
+      <TopBar title="Crop Scan" showBack transparent light />
+
+      <div className="relative z-10 flex-1 overflow-y-auto px-6 pt-2 pb-8">
+        {!result && !scanId && (
+          <div className="flex flex-col items-center text-center pt-6 pb-4">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/90 p-2 shadow-lg">
+              <img src={cropScannerIcon} alt="" className="h-10 w-10 object-contain" />
             </div>
-            <div>
-              <h2 className="font-bold text-ink text-lg">AI crop health check</h2>
-              <p className="text-sm text-muted mt-1">
-                Take a clear photo of leaves, fruit, or affected areas. We&apos;ll suggest
-                possible issues and link you to tutorials.
-              </p>
-            </div>
+            <h2 className="font-bold text-xl text-white drop-shadow-md">AI crop health check</h2>
+            <p className="mt-2 max-w-xs text-sm text-white/90 drop-shadow-sm">
+              Take a clear photo of leaves, fruit, or affected areas. We&apos;ll suggest
+              possible issues and link you to tutorials.
+            </p>
           </div>
-        </Card>
+        )}
 
         {!result && !scanId && (
           <div className="mb-6">
@@ -131,19 +139,23 @@ export function CropScan() {
               type="button"
               onClick={handlePickPhoto}
               disabled={busy}
-              className="w-full aspect-[4/3] rounded-2xl border-2 border-dashed border-green/40 bg-white flex flex-col items-center justify-center gap-3 hover:border-green transition-colors disabled:opacity-60"
+              className="group relative mx-auto flex w-full max-w-sm flex-col items-center justify-center gap-4 rounded-3xl border-2 border-white/70 bg-black/25 p-8 backdrop-blur-sm transition-all hover:border-white hover:bg-black/35 disabled:opacity-60"
             >
               {displayImage ? (
                 <img
                   src={displayImage}
                   alt="Crop preview"
-                  className="w-full h-full object-cover rounded-2xl"
+                  className="aspect-square w-full max-w-[220px] rounded-2xl object-cover ring-4 ring-white/50"
                 />
               ) : (
                 <>
-                  <Camera size={40} className="text-green" />
-                  <span className="font-bold text-ink">Camera or gallery</span>
-                  <span className="text-xs text-muted">JPEG / PNG, well lit, close-up</span>
+                  <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/95 p-3 shadow-xl">
+                    <img src={cropScannerIcon} alt="" className="h-16 w-16 object-contain" />
+                  </div>
+                  <div>
+                    <span className="block font-bold text-white drop-shadow">Tap to scan</span>
+                    <span className="mt-1 block text-xs text-white/80">Camera or gallery · JPEG / PNG</span>
+                  </div>
                 </>
               )}
             </button>
@@ -159,14 +171,14 @@ export function CropScan() {
         )}
 
         {busy && (
-          <div className="flex flex-col items-center py-8 gap-3">
+          <div className={`${glassCard} flex flex-col items-center rounded-3xl py-10 gap-3 mb-6`}>
             <Loader2 size={32} className="animate-spin text-green" />
-            <p className="text-sm font-medium text-muted">Analyzing your crop…</p>
+            <p className="text-sm font-medium text-ink">Analyzing your crop…</p>
           </div>
         )}
 
         {error && (
-          <Card className="p-4 mb-6 border-red-200 bg-red-50">
+          <Card leaves={false} className={`${glassCard} p-4 mb-6 border-red-200`}>
             <p className="text-sm text-red-800 font-medium">{error}</p>
             <Button variant="secondary" className="mt-3 w-full" onClick={reset}>
               Try again
@@ -180,11 +192,11 @@ export function CropScan() {
               <img
                 src={displayImage}
                 alt="Scanned crop"
-                className="w-full aspect-video object-cover rounded-2xl"
+                className="w-full aspect-video object-cover rounded-2xl ring-2 ring-white/60 shadow-xl"
               />
             )}
 
-            <Card className="p-5">
+            <Card leaves={false} className={`${glassCard} p-5`}>
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
                   <p className="text-xs text-muted uppercase tracking-wide">Detected</p>
@@ -205,7 +217,7 @@ export function CropScan() {
             </Card>
 
             {result.diseases.length > 0 && (
-              <Card className="p-5">
+              <Card leaves={false} className={`${glassCard} p-5`}>
                 <h4 className="font-bold text-ink mb-3">Possible issues</h4>
                 <ul className="space-y-3">
                   {result.diseases.map((d) => (
@@ -221,21 +233,22 @@ export function CropScan() {
               </Card>
             )}
 
-            <Card className="p-4 bg-amber-50 border-amber-100 flex gap-3">
+            <Card leaves={false} className="p-4 bg-amber-50/95 backdrop-blur-md border-amber-100 flex gap-3">
               <AlertTriangle size={20} className="text-amber-700 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-900 leading-relaxed">{result.disclaimer}</p>
             </Card>
 
             {result.relatedArticles.length > 0 && (
               <div>
-                <h4 className="font-bold text-ink mb-3 flex items-center gap-2">
+                <h4 className="font-bold text-white mb-3 flex items-center gap-2 drop-shadow">
                   <BookOpen size={18} /> Related articles
                 </h4>
                 <div className="space-y-2">
                   {result.relatedArticles.map((article) => (
                     <Card
                       key={article.id}
-                      className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                      leaves={false}
+                      className={`${glassCard} p-4 cursor-pointer hover:shadow-xl transition-shadow`}
                       onClick={() => navigate(`/farmer/knowledge`)}
                     >
                       <p className="font-semibold text-sm text-ink">{article.title}</p>
@@ -250,14 +263,15 @@ export function CropScan() {
 
             {result.relatedVideos.length > 0 && (
               <div>
-                <h4 className="font-bold text-ink mb-3 flex items-center gap-2">
+                <h4 className="font-bold text-white mb-3 flex items-center gap-2 drop-shadow">
                   <Play size={18} /> Related videos
                 </h4>
                 <div className="space-y-3">
                   {result.relatedVideos.map((video) => (
                     <Card
                       key={video.id}
-                      className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                      leaves={false}
+                      className={`${glassCard} overflow-hidden cursor-pointer hover:shadow-xl transition-shadow`}
                       onClick={() =>
                         navigate(`/farmer/knowledge/video/${toYouTubeRouteId(video.id)}`)
                       }
@@ -276,22 +290,26 @@ export function CropScan() {
               </div>
             )}
 
-            <Button variant="secondary" className="w-full" onClick={reset}>
-              Scan another photo
+            <Button variant="secondary" className="w-full bg-white/95" onClick={reset}>
+              <span className="inline-flex items-center gap-2">
+                <img src={cropScannerIcon} alt="" className="h-5 w-5 object-contain" />
+                Scan another photo
+              </span>
             </Button>
           </div>
         )}
 
-        {history.length > 0 && !busy && (
-          <div className="mt-8">
-            <h4 className="font-bold text-ink mb-3 flex items-center gap-2">
+        {history.length > 0 && !busy && !result && (
+          <div className="mt-4">
+            <h4 className="font-bold text-white mb-3 flex items-center gap-2 drop-shadow">
               <History size={18} /> Recent scans
             </h4>
             <div className="space-y-2">
               {history.map((item) => (
                 <Card
                   key={item.id}
-                  className="p-4 flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow"
+                  leaves={false}
+                  className={`${glassCard} p-4 flex items-center gap-3 cursor-pointer hover:shadow-xl transition-shadow`}
                   onClick={() => navigate(`/farmer/knowledge/scan/${item.id}`)}
                 >
                   <img
