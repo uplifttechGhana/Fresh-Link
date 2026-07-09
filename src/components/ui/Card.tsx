@@ -29,7 +29,7 @@ export function Card({ className, children, onClick, leaves = true, leafOpacity 
   return (
     <div
       className={twMerge(
-        'relative isolate bg-white rounded-3xl shadow-card overflow-hidden',
+        'relative isolate bg-card rounded-3xl shadow-card overflow-hidden',
         onClick ?
           'cursor-pointer active:scale-[0.98] transition-transform' :
           '',

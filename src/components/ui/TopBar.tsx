@@ -22,13 +22,13 @@ export function TopBar({
   const titleClass = light ? 'text-white drop-shadow-sm' : 'text-ink';
   const backClass = light
     ? 'bg-white/20 backdrop-blur-sm text-white hover:bg-white/30'
-    : 'bg-white shadow-sm text-ink hover:bg-gray-50';
+    : 'bg-card shadow-sm text-ink hover:opacity-80';
   const actionClass = light
     ? 'bg-white/20 backdrop-blur-sm text-white'
-    : 'bg-white shadow-sm text-ink';
+    : 'bg-card shadow-sm text-ink';
   return (
     <div
-      className={`flex flex-shrink-0 items-center justify-between px-6 py-4 ${transparent ? 'bg-transparent' : 'bg-cream/80 backdrop-blur-md'} z-30 relative`}>
+      className={`flex flex-shrink-0 items-center justify-between px-6 py-4 ${transparent ? 'bg-transparent' : 'bg-cream/90 backdrop-blur-md dark:bg-[#0F1C14]/90'} z-30 relative`}>
       
       <div className="w-10">
         {showBack &&

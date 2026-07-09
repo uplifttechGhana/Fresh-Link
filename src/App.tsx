@@ -81,7 +81,8 @@ import { useAuthBootstrap } from './lib/hooks/useAuthBootstrap';
 import { PageLoader } from './components/ui/PageLoader';
 import { useAuthStore } from './lib/authStore';
 import { shouldShowTabTransitionLoader } from './lib/navTabs';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { useStore } from './store';
 
 function useTabTransition() {
   const location = useLocation();
@@ -239,10 +240,23 @@ function AppRoutes() {
   );
 }
 
+function DarkModeApplicator() {
+  const darkMode = useStore((s) => s.darkMode);
+  useLayoutEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+  return null;
+}
+
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <HashRouter>
+        <DarkModeApplicator />
         <NotificationProvider>
           <AppRoutes />
         </NotificationProvider>

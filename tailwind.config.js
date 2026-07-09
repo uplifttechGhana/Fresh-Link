@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
   './index.html',
   './src/**/*.{js,ts,jsx,tsx}'
@@ -20,14 +21,17 @@ export default {
           DEFAULT: '#EA7A3B',
           soft: '#FBEADD',
         },
-        cream: '#F4F1EA',
+        /* These map to CSS vars that flip in dark mode */
+        cream: 'var(--color-bg)',
+        card: 'var(--color-card)',
+        ink: 'var(--color-ink)',
+        muted: 'var(--color-muted)',
+        border: 'var(--color-border)',
         earth: '#8A6A4F',
         yellow: {
           DEFAULT: '#F5D042',
           light: '#F9E58A',
         },
-        ink: '#16201A',
-        muted: '#6B7770',
       },
       fontFamily: {
         sans: ['DM Sans', 'system-ui', 'sans-serif'],

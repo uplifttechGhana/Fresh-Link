@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Fingerprint } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
 import { AuthBackground } from '../../components/ui/AuthBackground';
 import { useLogin } from '../../lib/hooks/useAuth';
 import { useAuthStore } from '../../lib/authStore';
 import { normalizeGhanaPhone } from '../../lib/phone';
+import { useBiometric } from '../../lib/hooks/useBiometric';
 
 const ROLE_HOME: Record<string, string> = {
   buyer: '/buyer/home',
@@ -33,7 +34,9 @@ export function Login() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [bioError, setBioError] = useState('');
   const login = useLogin();
+  const biometric = useBiometric();
   const { user, accessToken, guestRole, pendingRole } = useAuthStore();
   const setPendingRole = useAuthStore((s) => s.setPendingRole);
 
@@ -61,6 +64,21 @@ export function Login() {
         navigate(returnTo || home);
       },
     });
+  };
+
+  const handleBiometric = async () => {
+    setBioError('');
+    const ok = await biometric.authenticate('Log in to FreshLink');
+    if (!ok) {
+      setBioError('Biometric authentication failed. Use your password instead.');
+      return;
+    }
+    // After biometric succeeds, auto-submit with stored credentials
+    if (!identifier || !password) {
+      setBioError('Enter your credentials once, then use biometrics next time.');
+      return;
+    }
+    handleLogin();
   };
 
   const isEmail = identifier.includes('@');
@@ -176,6 +194,33 @@ export function Login() {
           >
             {login.isPending ? t('common.loading') : t('auth.signIn')}
           </Button>
+
+          {biometric.available && biometric.enrolled && (
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <div className="flex items-center gap-3 w-full">
+                <div className="flex-1 h-px bg-white/25" />
+                <span className="text-xs text-white/60 font-medium">or</span>
+                <div className="flex-1 h-px bg-white/25" />
+              </div>
+              <button
+                type="button"
+                onClick={handleBiometric}
+                disabled={login.isPending}
+                className="flex flex-col items-center gap-1.5 py-2 disabled:opacity-50"
+                aria-label="Sign in with biometrics"
+              >
+                <div className="w-14 h-14 rounded-full bg-white/15 backdrop-blur-md border-2 border-white/30 flex items-center justify-center hover:bg-white/25 active:scale-95 transition-all shadow-lg">
+                  <Fingerprint size={28} className="text-white" />
+                </div>
+                <span className="text-xs text-white/80 font-medium">
+                  {biometric.biometryType === 'face' ? 'Face ID' : 'Fingerprint'}
+                </span>
+              </button>
+              {bioError && (
+                <p className="text-red-300 text-xs text-center">{bioError}</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </AuthBackground>

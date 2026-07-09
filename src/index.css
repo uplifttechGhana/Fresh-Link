@@ -12,15 +12,37 @@
 
 :root {
   /* Brand */
-  --forest: #0E4D2C;       /* deep forest green */
-  --green: #15803D;        /* primary green */
-  --green-soft: #E7F0EA;   /* soft green tint */
-  --orange: #EA7A3B;       /* warm accent */
+  --forest: #0E4D2C;
+  --green: #15803D;
+  --green-soft: #E7F0EA;
+  --orange: #EA7A3B;
   --orange-soft: #FBEADD;
-  --cream: #F4F1EA;        /* app background */
-  --earth: #8A6A4F;        /* earth tone */
-  --ink: #16201A;          /* near-black text */
-  --muted: #6B7770;        /* muted text */
+  --cream: #F4F1EA;
+  --earth: #8A6A4F;
+  --ink: #16201A;
+  --muted: #6B7770;
+
+  /* Semantic tokens — light mode */
+  --color-bg:     #F4F1EA;
+  --color-card:   #FFFFFF;
+  --color-ink:    #16201A;
+  --color-muted:  #6B7770;
+  --color-border: #E5E7EB;
+  --color-input:  #FFFFFF;
+}
+
+/* ── Dark mode tokens ───────────────────────────────────────── */
+.dark {
+  --color-bg:     #0F1C14;
+  --color-card:   #1A2820;
+  --color-ink:    #E8F0EB;
+  --color-muted:  #8AADA0;
+  --color-border: #2C3F33;
+  --color-input:  #1F3028;
+}
+.dark body {
+  background: var(--color-bg);
+  color: var(--color-ink);
 }
 html, body, #root {
   height: 100%;
