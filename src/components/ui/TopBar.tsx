@@ -1,7 +1,6 @@
 import React from 'react';
-import { ChevronLeft, MoreHorizontal, Search, Bookmark, MessageCircle, Moon, Sun } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal, Search, Bookmark, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../../store';
 
 interface TopBarProps {
   title?: string;
@@ -22,8 +21,6 @@ export function TopBar({
   light = false,
 }: TopBarProps) {
   const navigate = useNavigate();
-  const darkMode = useStore((s) => s.darkMode);
-  const toggleDarkMode = useStore((s) => s.toggleDarkMode);
 
   const titleClass = light ? 'text-white drop-shadow-sm' : 'text-ink';
   const backClass = light
@@ -58,22 +55,8 @@ export function TopBar({
         </h1>
       )}
 
-      {/* Right — action + dark mode toggle */}
+      {/* Right — action */}
       <div className="flex items-center gap-1">
-        {/* Dark mode toggle — always visible */}
-        <button
-          type="button"
-          onClick={toggleDarkMode}
-          aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-          className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${
-            light
-              ? 'bg-white/20 backdrop-blur-sm text-white hover:bg-white/30'
-              : 'bg-card shadow-sm text-ink hover:opacity-80'
-          }`}
-        >
-          {darkMode ? <Sun size={17} /> : <Moon size={17} />}
-        </button>
-
         {/* Optional right action */}
         {rightAction === 'search' && (
           <button onClick={onRightAction} className={`w-9 h-9 flex items-center justify-center rounded-full ${actionClass}`}>

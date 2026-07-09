@@ -3,6 +3,7 @@ import { Bell, Menu, UserCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from './Card';
 import { LeafDecoration } from './LeafDecoration';
+import { DarkModeToggle } from './DarkModeToggle';
 import menuHarvestBg from '../../assets/menu-harvest-bg.png';
 
 export const QUICK_ACTION_ICON_CLASS =
@@ -68,7 +69,10 @@ export function DashboardHero({
             </div>
           </div>
 
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Dark mode toggle */}
+            <DarkModeToggle light />
+
             {notificationsPath && (
               <button
                 type="button"
