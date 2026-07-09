@@ -18,7 +18,7 @@ const BASE = self.location.origin;
 messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title ?? 'FreshLink';
   const body  = payload.notification?.body  ?? '';
-  const image = payload.notification?.image ?? `${BASE}/notification-bg.png`;
+  const image = payload.notification?.image ?? `${BASE}/freshlink-logo.png`;
 
   const options = {
     body,

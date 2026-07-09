@@ -99,7 +99,7 @@ export class NotificationsService {
     const frontendUrl =
       process.env.FRONTEND_URL ?? 'https://fresh-link-weld.vercel.app';
     const iconUrl  = `${frontendUrl}/app-icon-192.png`;
-    const imageUrl = `${frontendUrl}/notification-bg.png`;
+    const imageUrl = `${frontendUrl}/freshlink-logo.png`;
     const stringData = data
       ? Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]))
       : undefined;
