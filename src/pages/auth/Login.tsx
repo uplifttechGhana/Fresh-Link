@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +44,7 @@ export function Login() {
   const biometric = useBiometric();
   const { user, accessToken, guestRole, pendingRole } = useAuthStore();
   const setPendingRole = useAuthStore((s) => s.setPendingRole);
+  const autoTriggered = useRef(false);
 
   if (user && accessToken) {
     return <Navigate to={ROLE_HOME[user.role] ?? '/buyer/home'} replace />;
@@ -73,8 +74,10 @@ export function Login() {
     });
   };
 
-  const handleBiometric = async () => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleBiometric = useCallback(async () => {
     setBioError('');
+    login.reset(); // clear any previous password error
 
     // Use the biometric-specific refresh token (survives logout)
     const bioRefresh = getBiometricRefreshToken();
@@ -83,10 +86,10 @@ export function Login() {
       return;
     }
 
-    // Show the biometric / device-credential prompt
+    // Show the native biometric / device-credential prompt
     const ok = await biometric.authenticate('Sign in to FreshLink');
     if (!ok) {
-      setBioError('Not recognised. Try again or use your password.');
+      // User cancelled or sensor failed — stay silent, just let them use password
       return;
     }
 
@@ -100,7 +103,6 @@ export function Login() {
       });
       if (!res.ok) throw new Error('expired');
       const data = await res.json();
-      // Persist new refresh token so next biometric login still works
       if (data.refreshToken) updateBiometricRefreshToken(data.refreshToken);
       const { setAuth } = useAuthStore.getState();
       setAuth(data.user, data.accessToken, data.refreshToken);
@@ -108,7 +110,22 @@ export function Login() {
     } catch {
       setBioError('Session expired. Sign in with your password to re-activate fingerprint.');
     }
-  };
+  }, [biometric, navigate, returnTo, login]);
+
+  // Auto-trigger biometric prompt on load when a saved session exists
+  // so user can just touch their fingerprint sensor without tapping the icon
+  useEffect(() => {
+    if (
+      autoTriggered.current ||
+      !biometric.available ||
+      !biometric.enrolled ||
+      !getBiometricRefreshToken()
+    ) return;
+    autoTriggered.current = true;
+    // Short delay so the screen renders first before the native dialog appears
+    const t = setTimeout(() => handleBiometric(), 600);
+    return () => clearTimeout(t);
+  }, [biometric.available, biometric.enrolled, handleBiometric]);
 
   const isEmail = identifier.includes('@');
 
