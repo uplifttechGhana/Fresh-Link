@@ -14,10 +14,9 @@ interface BiometricState {
 }
 
 async function checkAvailability(): Promise<BiometricState> {
-  const hasSavedSession = !!(
-    localStorage.getItem(BIOMETRIC_ENABLED_KEY) &&
-    localStorage.getItem('refresh_token')
-  );
+  // hasSavedSession = user has previously logged in with password on this device
+  // We only need the biometric flag — the refresh token check happens at tap time
+  const hasSavedSession = !!localStorage.getItem(BIOMETRIC_ENABLED_KEY);
 
   if (!isNative) return { available: false, biometryType: 'none', enrolled: false, hasSavedSession };
 

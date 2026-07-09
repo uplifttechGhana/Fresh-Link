@@ -66,6 +66,8 @@ export const useAuthStore = create<AuthState>()(
       clearAuth: () => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        // Note: freshlink_biometric_enabled is intentionally kept so the
+        // fingerprint button reappears on the login screen after logout.
         queryClient.clear();
         set({ user: null, accessToken: null, refreshToken: null, guestRole: null });
       },

@@ -71,37 +71,38 @@ export function Login() {
   const handleBiometric = async () => {
     setBioError('');
 
-    // Check we have a refresh token to use after biometric passes
+    // No prior session — guide the user to log in with password first
     const storedRefresh = localStorage.getItem('refresh_token');
     if (!storedRefresh) {
-      setBioError('Sign in with your password first to set up biometric login.');
+      setBioError('Sign in with your password once to activate fingerprint login.');
       return;
     }
 
+    // Show the biometric prompt
     const ok = await biometric.authenticate('Log in to FreshLink');
     if (!ok) {
-      setBioError('Biometric not recognised. Use your password instead.');
+      setBioError('Not recognised. Try again or use your password.');
       return;
     }
 
-    // Biometric passed — silently exchange the refresh token for a new session
+    // Biometric passed — silently exchange refresh token for a new session
     try {
-      const res = await fetch(
-        `${(import.meta.env.VITE_API_BASE_URL_NATIVE || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001')}/api/v1/auth/refresh`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken: storedRefresh }),
-        }
-      );
-      if (!res.ok) throw new Error('Session expired');
+      const base = import.meta.env.VITE_API_BASE_URL_NATIVE || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const res = await fetch(`${base}/api/v1/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: storedRefresh }),
+      });
+      if (!res.ok) throw new Error('expired');
       const data = await res.json();
       const { setAuth } = useAuthStore.getState();
       setAuth(data.user, data.accessToken, data.refreshToken);
       enableBiometricLogin();
       navigate(returnTo || (ROLE_HOME[data.user.role] ?? '/buyer/home'));
     } catch {
-      setBioError('Session expired. Please sign in with your password.');
+      // Refresh token expired — user must log in with password again to re-arm biometric
+      localStorage.removeItem('refresh_token');
+      setBioError('Session expired. Sign in with your password to re-activate fingerprint.');
     }
   };
 
@@ -214,7 +215,7 @@ export function Login() {
             {login.isPending ? t('common.loading') : t('auth.signIn')}
           </Button>
 
-          {biometric.available && biometric.enrolled && biometric.hasSavedSession && (
+          {biometric.available && biometric.enrolled && (
             <div className="mt-4 flex flex-col items-center gap-2">
               <div className="flex items-center gap-3 w-full">
                 <div className="flex-1 h-px bg-white/25" />
