@@ -28,6 +28,7 @@ import { TypewriterText } from '../../components/ui/TypewriterText';
 import { SettingsMenuSheet } from '../../components/ui/SettingsMenuSheet';
 import { AvatarUploadSheet } from '../../components/ui/AvatarUploadSheet';
 import { LeafDecoration } from '../../components/ui/LeafDecoration';
+import { DarkModeToggle } from '../../components/ui/DarkModeToggle';
 import { resolveMediaUrl } from '../../lib/mediaUrl';
 import menuHarvestBg from '../../assets/menu-harvest-bg.png';
 
@@ -192,7 +193,8 @@ export function BuyerHome() {
             </div>
 
             {user ? (
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <DarkModeToggle light />
                 <button
                   onClick={() => navigate('/buyer/notifications')}
                   aria-label="Notifications"

@@ -24,6 +24,7 @@ export function InvestorDashboard() {
         title="Investor Dashboard"
         rightAction="more"
         onRightAction={() => navigate('/settings')}
+        showDarkToggle
       />
 
       <div className="flex-1 overflow-y-auto px-6 pt-4 pb-8">

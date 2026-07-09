@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, MoreHorizontal, Search, Bookmark, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { DarkModeToggle } from './DarkModeToggle';
 
 interface TopBarProps {
   title?: string;
@@ -10,6 +11,8 @@ interface TopBarProps {
   transparent?: boolean;
   /** White text/icons for use on photo backgrounds */
   light?: boolean;
+  /** Show dark mode toggle in the right side (use on top-level/dashboard pages) */
+  showDarkToggle?: boolean;
 }
 
 export function TopBar({
@@ -19,6 +22,7 @@ export function TopBar({
   onRightAction,
   transparent = false,
   light = false,
+  showDarkToggle = false,
 }: TopBarProps) {
   const navigate = useNavigate();
 
@@ -55,8 +59,9 @@ export function TopBar({
         </h1>
       )}
 
-      {/* Right — action */}
+      {/* Right — toggle + action */}
       <div className="flex items-center gap-1">
+        {showDarkToggle && <DarkModeToggle />}
         {/* Optional right action */}
         {rightAction === 'search' && (
           <button onClick={onRightAction} className={`w-9 h-9 flex items-center justify-center rounded-full ${actionClass}`}>

@@ -44,6 +44,52 @@
   background: var(--color-bg);
   color: var(--color-ink);
 }
+
+/* ── Dark mode global overrides ─────────────────────────────── */
+/* White surfaces → dark card */
+.dark .bg-white { background-color: #1A2820 !important; }
+.dark .bg-white\/90, .dark .bg-white\/80, .dark .bg-white\/70 { background-color: rgba(26,40,32,0.92) !important; }
+
+/* Gray backgrounds → dark equivalents */
+.dark .bg-gray-50  { background-color: #162118 !important; }
+.dark .bg-gray-100 { background-color: #1A2820 !important; }
+.dark .bg-gray-200 { background-color: #1F3028 !important; }
+
+/* Text on white/light areas */
+.dark .text-gray-900, .dark .text-gray-800 { color: #E8F0EB !important; }
+.dark .text-gray-700, .dark .text-gray-600 { color: #B8D0C4 !important; }
+.dark .text-gray-500, .dark .text-gray-400 { color: #8AADA0 !important; }
+.dark .text-gray-300 { color: #6B8C80 !important; }
+
+/* Green text stays readable */
+.dark .text-green-900 { color: #D1FAE5 !important; }
+.dark .text-green-800 { color: #A7F3D0 !important; }
+.dark .text-green-700 { color: #6EE7B7 !important; }
+.dark .text-green-600 { color: #34D399 !important; }
+
+/* Borders */
+.dark .border-gray-100, .dark .border-gray-200 { border-color: #2C3F33 !important; }
+.dark .border-green-100, .dark .border-green-200 { border-color: #2C4A36 !important; }
+
+/* Inputs */
+.dark input, .dark textarea, .dark select {
+  background-color: #1F3028 !important;
+  color: #E8F0EB !important;
+  border-color: #2C3F33 !important;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: #8AADA0 !important; }
+
+/* Dividers */
+.dark .divide-gray-100 > * + * { border-color: #2C3F33 !important; }
+
+/* Bottom nav and tab bars */
+.dark .bg-cream { background-color: #0F1C14 !important; }
+
+/* Shimmer in dark mode */
+.dark .shimmer {
+  background: linear-gradient(90deg, #1A2820 25%, #1F3028 50%, #1A2820 75%);
+  background-size: 936px 100%;
+}
 html, body, #root {
   height: 100%;
 }

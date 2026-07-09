@@ -7,11 +7,12 @@ import { Capacitor } from '@capacitor/core';
 
 function getApiBaseUrls(): string[] {
   const nativeUrl = import.meta.env.VITE_API_BASE_URL_NATIVE as string | undefined;
-  const lanUrl = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:3001';
+  const webUrl = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:3001';
   if (Capacitor.isNativePlatform()) {
-    return [...new Set([nativeUrl, lanUrl, 'http://127.0.0.1:3001'].filter(Boolean))] as string[];
+    // Native APK: prefer VITE_API_BASE_URL_NATIVE, fall back to web URL only
+    return [...new Set([nativeUrl, webUrl].filter(Boolean))] as string[];
   }
-  return [lanUrl];
+  return [webUrl];
 }
 
 export class ApiError extends Error {
