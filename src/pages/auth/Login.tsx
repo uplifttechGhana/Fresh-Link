@@ -45,55 +45,23 @@ export function Login() {
   const { user, accessToken, guestRole, pendingRole } = useAuthStore();
   const setPendingRole = useAuthStore((s) => s.setPendingRole);
   const autoTriggered = useRef(false);
-
-  if (user && accessToken) {
-    return <Navigate to={ROLE_HOME[user.role] ?? '/buyer/home'} replace />;
-  }
-
   const returnTo = searchParams.get('returnTo') ?? '';
 
-  const handleSignUp = () => {
-    const role = guestRole ?? pendingRole;
-    if (role) {
-      setPendingRole(role);
-      navigate('/register');
-      return;
-    }
-    navigate('/role-select');
-  };
-
-  const handleLogin = () => {
-    const payload = { ...parseLoginIdentifier(identifier), password };
-    login.mutate(payload, {
-      onSuccess: (data) => {
-        // Save refresh token under a biometric-specific key (survives logout)
-        if (data.refreshToken) enableBiometricLogin(data.refreshToken);
-        const home = ROLE_HOME[data.user.role] ?? '/buyer/home';
-        navigate(returnTo || home);
-      },
-    });
-  };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // IMPORTANT: handleBiometric and its useEffect must be defined BEFORE any
+  // early returns to comply with React's Rules of Hooks.
   const handleBiometric = useCallback(async () => {
     setBioError('');
-    login.reset(); // clear any previous password error
+    login.reset();
 
-    // Use the biometric-specific refresh token (survives logout)
     const bioRefresh = getBiometricRefreshToken();
     if (!bioRefresh) {
       setBioError('Sign in with your password once to activate fingerprint login.');
       return;
     }
 
-    // Show the native biometric / device-credential prompt
     const ok = await biometric.authenticate('Sign in to FreshLink');
-    if (!ok) {
-      // User cancelled or sensor failed — stay silent, just let them use password
-      return;
-    }
+    if (!ok) return;
 
-    // Biometric passed — exchange stored refresh token for a new session
     try {
       const base = import.meta.env.VITE_API_BASE_URL_NATIVE || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
       const res = await fetch(`${base}/api/v1/auth/refresh`, {
@@ -112,8 +80,6 @@ export function Login() {
     }
   }, [biometric, navigate, returnTo, login]);
 
-  // Auto-trigger biometric prompt on load when a saved session exists
-  // so user can just touch their fingerprint sensor without tapping the icon
   useEffect(() => {
     if (
       autoTriggered.current ||
@@ -122,10 +88,35 @@ export function Login() {
       !getBiometricRefreshToken()
     ) return;
     autoTriggered.current = true;
-    // Short delay so the screen renders first before the native dialog appears
     const t = setTimeout(() => handleBiometric(), 600);
     return () => clearTimeout(t);
   }, [biometric.available, biometric.enrolled, handleBiometric]);
+
+  // Redirect already-authenticated users to their dashboard
+  if (user && accessToken) {
+    return <Navigate to={ROLE_HOME[user.role] ?? '/buyer/home'} replace />;
+  }
+
+  const handleSignUp = () => {
+    const role = guestRole ?? pendingRole;
+    if (role) {
+      setPendingRole(role);
+      navigate('/register');
+      return;
+    }
+    navigate('/role-select');
+  };
+
+  const handleLogin = () => {
+    const payload = { ...parseLoginIdentifier(identifier), password };
+    login.mutate(payload, {
+      onSuccess: (data) => {
+        if (data.refreshToken) enableBiometricLogin(data.refreshToken);
+        const home = ROLE_HOME[data.user.role] ?? '/buyer/home';
+        navigate(returnTo || home);
+      },
+    });
+  };
 
   const isEmail = identifier.includes('@');
 

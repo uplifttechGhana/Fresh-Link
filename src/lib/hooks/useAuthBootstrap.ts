@@ -47,13 +47,19 @@ export function useAuthBootstrap() {
     api
       .get<AuthUser>('/users/me')
       .then((user) => {
-        setAuth(user, token);
+        // Preserve the existing refreshToken — bootstrap only re-syncs the user
+        // profile; it doesn't receive a new refresh token from /users/me.
+        const existingRefreshToken = useAuthStore.getState().refreshToken ?? undefined;
+        setAuth(user, token, existingRefreshToken);
         connectSocket(token);
       })
       .catch(() => {
-        // Token is invalid or user no longer exists — clear everything
+        // Reset the validated-token flag so bootstrap retries on next token change.
+        // Do NOT call clearAuth() here: a transient network error (no connectivity,
+        // server restart) would silently log the user out. If the token is truly
+        // invalid, the next API call will return 401, triggering tryRefresh and
+        // ultimately dispatching 'freshlink:auth-expired' which clears auth properly.
         validatedToken.current = null;
-        clearAuth();
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
