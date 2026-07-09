@@ -28,7 +28,7 @@ import {
 } from '../../lib/hooks/useCropScan';
 import { toYouTubeRouteId } from '../../lib/hooks/useKnowledge';
 
-const glassCard = 'bg-white/92 backdrop-blur-md border border-white/40 shadow-lg';
+const glassCard = 'bg-white border border-green-100 shadow-lg';
 
 export function CropScan() {
   const navigate = useNavigate();
@@ -172,8 +172,8 @@ export function CropScan() {
 
         {busy && (
           <div className={`${glassCard} flex flex-col items-center rounded-3xl py-10 gap-3 mb-6`}>
-            <Loader2 size={32} className="animate-spin text-green" />
-            <p className="text-sm font-medium text-ink">Analyzing your crop…</p>
+            <Loader2 size={32} className="animate-spin text-green-600" />
+            <p className="text-base font-semibold text-green-800">Analyzing your crop…</p>
           </div>
         )}
 
@@ -199,8 +199,8 @@ export function CropScan() {
             <Card leaves={false} className={`${glassCard} p-5`}>
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-xs text-muted uppercase tracking-wide">Detected</p>
-                  <h3 className="text-xl font-bold text-ink capitalize">{result.crop}</h3>
+                  <p className="text-xs font-bold text-green-600 uppercase tracking-wide">Detected</p>
+                  <h3 className="text-2xl font-bold text-green-900 capitalize">{result.crop}</h3>
                 </div>
                 <span
                   className={`text-xs font-bold px-3 py-1.5 rounded-full ${HEALTH_STATUS_COLORS[result.healthStatus]}`}
@@ -209,24 +209,24 @@ export function CropScan() {
                 </span>
               </div>
               {result.confidence > 0 && (
-                <p className="text-xs text-muted mb-3">
+                <p className="text-sm font-medium text-green-700 mb-3">
                   Confidence: {Math.round(result.confidence * 100)}%
                 </p>
               )}
-              <p className="text-sm text-ink leading-relaxed">{result.advice}</p>
+              <p className="text-base text-gray-800 leading-relaxed">{result.advice}</p>
             </Card>
 
             {result.diseases.length > 0 && (
               <Card leaves={false} className={`${glassCard} p-5`}>
-                <h4 className="font-bold text-ink mb-3">Possible issues</h4>
+                <h4 className="font-bold text-green-900 text-lg mb-3">Possible issues</h4>
                 <ul className="space-y-3">
                   {result.diseases.map((d) => (
-                    <li key={d.name} className="text-sm">
-                      <span className="font-semibold text-ink">{d.name}</span>
+                    <li key={d.name} className="text-base">
+                      <span className="font-semibold text-green-900">{d.name}</span>
                       {d.confidence > 0 && (
-                        <span className="text-muted"> · {Math.round(d.confidence * 100)}%</span>
+                        <span className="text-green-600 font-medium"> · {Math.round(d.confidence * 100)}%</span>
                       )}
-                      {d.notes && <p className="text-muted mt-0.5">{d.notes}</p>}
+                      {d.notes && <p className="text-gray-700 mt-0.5">{d.notes}</p>}
                     </li>
                   ))}
                 </ul>
@@ -251,9 +251,9 @@ export function CropScan() {
                       className={`${glassCard} p-4 cursor-pointer hover:shadow-xl transition-shadow`}
                       onClick={() => navigate(`/farmer/knowledge`)}
                     >
-                      <p className="font-semibold text-sm text-ink">{article.title}</p>
+                      <p className="font-semibold text-base text-green-900">{article.title}</p>
                       {article.category && (
-                        <p className="text-xs text-muted mt-1">{article.category}</p>
+                        <p className="text-sm text-green-600 font-medium mt-1">{article.category}</p>
                       )}
                     </Card>
                   ))}
@@ -282,7 +282,7 @@ export function CropScan() {
                           alt=""
                           className="w-24 h-16 object-cover rounded-lg shrink-0"
                         />
-                        <p className="text-sm font-semibold text-ink line-clamp-2">{video.title}</p>
+                        <p className="text-base font-semibold text-green-900 line-clamp-2">{video.title}</p>
                       </div>
                     </Card>
                   ))}
@@ -318,12 +318,12 @@ export function CropScan() {
                     className="w-14 h-14 rounded-lg object-cover shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm text-ink capitalize truncate">
+                    <p className="font-bold text-base text-green-900 capitalize truncate">
                       {item.crop ?? 'Crop scan'}
                     </p>
                     {item.healthStatus && (
                       <span
-                        className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 ${HEALTH_STATUS_COLORS[item.healthStatus]}`}
+                        className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full mt-1 ${HEALTH_STATUS_COLORS[item.healthStatus]}`}
                       >
                         {HEALTH_STATUS_LABELS[item.healthStatus]}
                       </span>
