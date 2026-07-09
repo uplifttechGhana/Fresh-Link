@@ -9,7 +9,12 @@ import { AuthBackground } from '../../components/ui/AuthBackground';
 import { useLogin } from '../../lib/hooks/useAuth';
 import { useAuthStore } from '../../lib/authStore';
 import { normalizeGhanaPhone } from '../../lib/phone';
-import { useBiometric, enableBiometricLogin } from '../../lib/hooks/useBiometric';
+import {
+  useBiometric,
+  enableBiometricLogin,
+  getBiometricRefreshToken,
+  updateBiometricRefreshToken,
+} from '../../lib/hooks/useBiometric';
 
 const ROLE_HOME: Record<string, string> = {
   buyer: '/buyer/home',
@@ -60,8 +65,8 @@ export function Login() {
     const payload = { ...parseLoginIdentifier(identifier), password };
     login.mutate(payload, {
       onSuccess: (data) => {
-        // Arm biometric for next login whenever the user logs in with password
-        enableBiometricLogin();
+        // Save refresh token under a biometric-specific key (survives logout)
+        if (data.refreshToken) enableBiometricLogin(data.refreshToken);
         const home = ROLE_HOME[data.user.role] ?? '/buyer/home';
         navigate(returnTo || home);
       },
@@ -71,37 +76,36 @@ export function Login() {
   const handleBiometric = async () => {
     setBioError('');
 
-    // No prior session — guide the user to log in with password first
-    const storedRefresh = localStorage.getItem('refresh_token');
-    if (!storedRefresh) {
+    // Use the biometric-specific refresh token (survives logout)
+    const bioRefresh = getBiometricRefreshToken();
+    if (!bioRefresh) {
       setBioError('Sign in with your password once to activate fingerprint login.');
       return;
     }
 
-    // Show the biometric prompt
-    const ok = await biometric.authenticate('Log in to FreshLink');
+    // Show the biometric / device-credential prompt
+    const ok = await biometric.authenticate('Sign in to FreshLink');
     if (!ok) {
       setBioError('Not recognised. Try again or use your password.');
       return;
     }
 
-    // Biometric passed — silently exchange refresh token for a new session
+    // Biometric passed — exchange stored refresh token for a new session
     try {
       const base = import.meta.env.VITE_API_BASE_URL_NATIVE || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
       const res = await fetch(`${base}/api/v1/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: storedRefresh }),
+        body: JSON.stringify({ refreshToken: bioRefresh }),
       });
       if (!res.ok) throw new Error('expired');
       const data = await res.json();
+      // Persist new refresh token so next biometric login still works
+      if (data.refreshToken) updateBiometricRefreshToken(data.refreshToken);
       const { setAuth } = useAuthStore.getState();
       setAuth(data.user, data.accessToken, data.refreshToken);
-      enableBiometricLogin();
       navigate(returnTo || (ROLE_HOME[data.user.role] ?? '/buyer/home'));
     } catch {
-      // Refresh token expired — user must log in with password again to re-arm biometric
-      localStorage.removeItem('refresh_token');
       setBioError('Session expired. Sign in with your password to re-activate fingerprint.');
     }
   };

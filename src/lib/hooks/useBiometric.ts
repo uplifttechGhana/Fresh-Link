@@ -4,6 +4,8 @@ import { isNative } from '../native';
 export type BiometricType = 'fingerprint' | 'face' | 'iris' | 'none';
 
 const BIOMETRIC_ENABLED_KEY = 'freshlink_biometric_enabled';
+// Separate key — NOT cleared on logout so biometric survives across sessions
+const BIOMETRIC_REFRESH_KEY = 'freshlink_bio_refresh';
 
 interface BiometricState {
   available: boolean;
@@ -47,30 +49,48 @@ async function checkAvailability(): Promise<BiometricState> {
   }
 }
 
-/** Call this after a successful password login to arm biometric for future logins */
-export function enableBiometricLogin() {
+/**
+ * Call after a successful password login.
+ * Saves the refresh token under a biometric-specific key that is NOT
+ * cleared on regular logout, so fingerprint works after sign-out.
+ */
+export function enableBiometricLogin(refreshToken: string) {
   localStorage.setItem(BIOMETRIC_ENABLED_KEY, '1');
+  localStorage.setItem(BIOMETRIC_REFRESH_KEY, refreshToken);
 }
 
-/** Call this on logout to disarm biometric */
+/** Returns the stored biometric refresh token (survives logout). */
+export function getBiometricRefreshToken(): string | null {
+  return localStorage.getItem(BIOMETRIC_REFRESH_KEY);
+}
+
+/** Update the stored biometric refresh token after a successful biometric login. */
+export function updateBiometricRefreshToken(token: string) {
+  localStorage.setItem(BIOMETRIC_REFRESH_KEY, token);
+}
+
+/** Call this to fully disable biometric (e.g. user turns it off in settings). */
 export function disableBiometricLogin() {
   localStorage.removeItem(BIOMETRIC_ENABLED_KEY);
+  localStorage.removeItem(BIOMETRIC_REFRESH_KEY);
 }
 
 /**
- * Show the biometric prompt. Returns true if the user passed biometric/device-credential check.
- * Does NOT log the user in — the caller must handle the actual login using the refresh token.
+ * Show the biometric prompt. Returns true if the user passed the check.
+ * allowDeviceCredential=true so side-mounted fingerprints (Tecno power button)
+ * and in-display sensors that fall back to device credential all work.
  */
 export async function authenticateWithBiometric(reason?: string): Promise<boolean> {
   if (!isNative) return false;
   try {
     const { BiometricAuth } = await import('@aparajita/capacitor-biometric-auth');
     await BiometricAuth.authenticate({
-      reason: reason ?? 'Log in to FreshLink',
+      reason: reason ?? 'Confirm your identity',
+      iosFallbackTitle: 'Use passcode',
+      androidTitle: 'FreshLink',
+      androidSubtitle: 'Verify to sign in',
       cancelTitle: 'Cancel',
-      // false = only biometric, no PIN/pattern fallback shown
-      // This removes the "use numeric" button that confused the user
-      allowDeviceCredential: false,
+      allowDeviceCredential: true,
     });
     return true;
   } catch {
