@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -19,6 +19,12 @@ export class NotificationsController {
     @Query('limit') limit = 20,
   ) {
     return this.service.getUserNotifications(user.id, +page, +limit);
+  }
+
+  @Post('test-push')
+  @ApiOperation({ summary: 'Send a test push notification to myself' })
+  testPush(@CurrentUser() user: any) {
+    return this.service.sendTestPush(user.id);
   }
 
   @Patch(':id/read')

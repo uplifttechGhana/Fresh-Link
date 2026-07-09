@@ -15,6 +15,25 @@ export class NotificationsService {
     this.wsServer = server;
   }
 
+  async sendTestPush(userId: string) {
+    const tokens = await this.prisma.deviceToken.findMany({ where: { userId } });
+    if (!tokens.length) {
+      return {
+        ok: false,
+        message: 'No device token registered for this account. Enable push notifications first.',
+      };
+    }
+
+    await this.createNotification(
+      userId,
+      'system' as NotificationType,
+      '🌱 Push notifications working!',
+      'Your FreshLink push notifications are set up correctly. You\'re all set.',
+    );
+
+    return { ok: true, message: 'Test notification sent!', tokenCount: tokens.length };
+  }
+
   async createNotification(
     userId: string,
     type: NotificationType,

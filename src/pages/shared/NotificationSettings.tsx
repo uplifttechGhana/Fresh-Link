@@ -3,6 +3,8 @@ import { toast } from 'sonner';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { useMutation } from '@tanstack/react-query';
+import { api, formatApiError } from '../../lib/api';
 import {
   getPushPermissionStatus,
   registerPushNotifications,
@@ -16,6 +18,15 @@ export function NotificationSettings() {
   const [system, setSystem] = useState(true);
   const [pushStatus, setPushStatus] = useState(getPushPermissionStatus);
   const [enabling, setEnabling] = useState(false);
+
+  const testPush = useMutation({
+    mutationFn: () => api.post<{ ok: boolean; message: string }>('/notifications/test-push', {}),
+    onSuccess: (data) => {
+      if (data.ok) toast.success(data.message);
+      else toast.error(data.message);
+    },
+    onError: (err) => toast.error(formatApiError(err)),
+  });
 
   const handleEnablePush = async () => {
     setEnabling(true);
@@ -57,6 +68,16 @@ export function NotificationSettings() {
               className="w-full"
             >
               {enabling ? 'Enabling…' : 'Enable Push Notifications'}
+            </Button>
+          )}
+          {pushEnabled && (
+            <Button
+              variant="outline"
+              onClick={() => testPush.mutate()}
+              disabled={testPush.isPending}
+              className="w-full mt-1"
+            >
+              {testPush.isPending ? 'Sending…' : '🔔 Send test notification'}
             </Button>
           )}
         </Card>
