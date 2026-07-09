@@ -80,7 +80,9 @@ export function Register() {
                   +233
                 </div>
                 <input
-                  type="tel"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="tel"
                   className="flex-1 px-4 py-3.5 bg-transparent outline-none text-ink font-medium"
                   placeholder="00 000 0000"
                   value={phone}
@@ -96,6 +98,8 @@ export function Register() {
               <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
                 <input
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
                   className="flex-1 px-4 py-3.5 bg-transparent outline-none text-ink font-medium"
                   placeholder="john@example.com"
                   value={email}
@@ -111,6 +115,8 @@ export function Register() {
               <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  inputMode="text"
+                  autoComplete="new-password"
                   className="flex-1 px-4 py-3.5 bg-transparent outline-none text-ink font-medium"
                   placeholder="••••••••"
                   value={password}

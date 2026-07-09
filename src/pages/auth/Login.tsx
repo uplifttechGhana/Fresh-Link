@@ -104,30 +104,23 @@ export function Login() {
               <label className="block text-sm font-bold text-white mb-2">
                 {t('auth.loginIdentifier')}
               </label>
-              {isEmail ? (
-                <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
-                  <input
-                    type="email"
-                    className="flex-1 px-4 py-4 bg-transparent outline-none text-ink font-medium"
-                    placeholder={t('auth.emailPlaceholder')}
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                  />
-                </div>
-              ) : (
-                <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
-                  <div className="px-4 py-4 bg-gray-50 text-ink font-bold border-r border-gray-100 flex items-center">
+              <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
+                {/* Show +233 prefix only when input looks like a phone number */}
+                {!isEmail && identifier.length > 0 && !identifier.includes('@') && (
+                  <div className="px-4 py-4 bg-gray-50 text-ink font-bold border-r border-gray-100 flex items-center select-none">
                     +233
                   </div>
-                  <input
-                    type="tel"
-                    className="flex-1 px-4 py-4 bg-transparent outline-none text-ink font-medium"
-                    placeholder="00 000 0000"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                  />
-                </div>
-              )}
+                )}
+                <input
+                  type="text"
+                  inputMode="text"
+                  autoComplete="username"
+                  className="flex-1 px-4 py-4 bg-transparent outline-none text-ink font-medium"
+                  placeholder={t('auth.emailPlaceholder') || 'Email or phone number'}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                />
+              </div>
               <p className="text-xs text-white/70 mt-2">
                 {t('auth.loginIdentifierHint')}
               </p>
@@ -140,6 +133,8 @@ export function Login() {
               <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden focus-within:ring-2 focus-within:ring-green-500">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  inputMode="text"
+                  autoComplete="current-password"
                   className="flex-1 px-4 py-4 bg-transparent outline-none text-ink font-medium"
                   placeholder={t('auth.passwordPlaceholder')}
                   value={password}
