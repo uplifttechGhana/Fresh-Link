@@ -96,6 +96,14 @@ export class NotificationsService {
       return;
     }
 
+    const frontendUrl =
+      process.env.FRONTEND_URL ?? 'https://fresh-link-weld.vercel.app';
+    const iconUrl  = `${frontendUrl}/app-icon-192.png`;
+    const imageUrl = `${frontendUrl}/notification-bg.png`;
+    const stringData = data
+      ? Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]))
+      : undefined;
+
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const admin = require('firebase-admin') as any;
@@ -113,10 +121,24 @@ export class NotificationsService {
         tokens.map((t) =>
           admin.messaging().send({
             token: t.token,
-            notification: { title, body },
-            data: data
-              ? Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]))
-              : undefined,
+            notification: { title, body, imageUrl },
+            data: stringData,
+            webpush: {
+              notification: {
+                icon:               iconUrl,
+                badge:              iconUrl,
+                image:              imageUrl,
+                requireInteraction: false,
+                vibrate:            [200, 100, 200],
+              },
+              fcmOptions: { link: frontendUrl },
+            },
+            android: {
+              notification: {
+                imageUrl,
+                channelId: 'freshlink_default',
+              },
+            },
           }),
         ),
       );
