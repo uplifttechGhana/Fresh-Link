@@ -71,7 +71,10 @@ export function usePushNotifications() {
       try {
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
           scope: '/',
+          updateViaCache: 'none', // always fetch fresh SW on each visit
         });
+        // force an immediate update check so new SW versions apply right away
+        await registration.update();
         await navigator.serviceWorker.ready;
 
         const { getMessaging, getToken, onMessage } = await import('firebase/messaging');
@@ -87,8 +90,21 @@ export function usePushNotifications() {
           await api.post('/users/me/device-token', { token, platform: 'web' });
         }
 
+        const base = window.location.origin;
         webUnsubscribe = onMessage(messaging, (payload) => {
-          console.log('[push] Foreground web push:', payload);
+          // Show a real OS notification even when the tab is foregrounded
+          const title = payload.notification?.title ?? 'FreshLink';
+          const body  = payload.notification?.body  ?? '';
+          const image = (payload.notification as any)?.image ?? `${base}/notification-bg.png`;
+          registration.showNotification(title, {
+            body,
+            icon:               `${base}/app-icon-192.png`,
+            badge:              `${base}/app-icon-192.png`,
+            image,
+            vibrate:            [200, 100, 200],
+            requireInteraction: false,
+            data:               { url: base },
+          });
         });
       } catch (err) {
         console.warn('[push] Web registration failed:', err);

@@ -102,7 +102,9 @@ async function registerWebPush(): Promise<{ ok: boolean; message: string }> {
     // Register the service worker BEFORE getMessaging/getToken
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
       scope: '/',
+      updateViaCache: 'none', // always check for a fresh SW
     });
+    await registration.update();
     await navigator.serviceWorker.ready;
 
     const messaging = getMessaging(firebaseApp);
