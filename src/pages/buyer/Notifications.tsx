@@ -112,12 +112,19 @@ function NotifRow({ notif, idx }: { notif: ApiNotification; idx: number }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: idx * 0.05 }}
-      className={`flex gap-4 p-4 rounded-2xl transition-colors ${isRead ? 'bg-transparent' : 'bg-white shadow-sm'}`}>
-      
-      <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getIconBg(notif.type)}`}>
+      className={`relative overflow-hidden flex gap-4 p-4 rounded-2xl transition-colors ${isRead ? 'bg-card' : 'bg-card shadow-sm'}`}>
+      {/* Logo watermark */}
+      <img
+        src="/freshlink-logo.png"
+        alt=""
+        aria-hidden
+        className="absolute inset-0 w-full h-full object-contain object-center pointer-events-none select-none"
+        style={{ opacity: 0.07 }}
+      />
+      <div className={`relative w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getIconBg(notif.type)}`}>
         {getIcon(notif.type)}
       </div>
-      <div className="flex-1 min-w-0 pt-1">
+      <div className="relative flex-1 min-w-0 pt-1">
         <div className="flex justify-between items-start mb-1">
           <h4 className={`text-sm font-bold truncate pr-2 ${isRead ? 'text-ink/80' : 'text-ink'}`}>
             {notif.title}
@@ -130,7 +137,7 @@ function NotifRow({ notif, idx }: { notif: ApiNotification; idx: number }) {
           {notif.body}
         </p>
       </div>
-      {!isRead && <div className="w-2 h-2 rounded-full bg-green mt-2 flex-shrink-0" />}
+      {!isRead && <div className="relative w-2 h-2 rounded-full bg-green mt-2 flex-shrink-0" />}
     </motion.div>
   );
 }

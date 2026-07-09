@@ -73,26 +73,36 @@ export function Notifications() {
           {items.map((notif) => (
             <Card
               key={notif.id}
-              className={`p-4 flex gap-4 cursor-pointer ${!notif.readAt ? 'border-l-4 border-l-green' : ''}`}
+              className={`overflow-hidden cursor-pointer ${!notif.readAt ? 'border-l-4 border-l-green' : ''}`}
               onClick={() => { if (!notif.readAt) markOne.mutate(notif.id); }}
             >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getBg(notif.type)}`}>
-                {getIcon(notif.type)}
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-start mb-1">
-                  <h4 className={`text-sm ${!notif.readAt ? 'font-bold text-ink' : 'font-medium text-ink'}`}>
-                    {notif.title}
-                  </h4>
-                  <span className="text-[10px] text-muted whitespace-nowrap ml-2">
-                    {timeAgo(notif.createdAt)}
-                  </span>
+              {/* Logo watermark */}
+              <img
+                src="/freshlink-logo.png"
+                alt=""
+                aria-hidden
+                className="absolute inset-0 w-full h-full object-contain object-center pointer-events-none select-none"
+                style={{ opacity: 0.07 }}
+              />
+              <div className="relative flex gap-4 p-4">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getBg(notif.type)}`}>
+                  {getIcon(notif.type)}
                 </div>
-                <p className="text-xs text-muted leading-relaxed">{notif.body}</p>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className={`text-sm ${!notif.readAt ? 'font-bold text-ink' : 'font-medium text-ink'}`}>
+                      {notif.title}
+                    </h4>
+                    <span className="text-[10px] text-muted whitespace-nowrap ml-2">
+                      {timeAgo(notif.createdAt)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted leading-relaxed">{notif.body}</p>
+                </div>
+                {!notif.readAt && (
+                  <div className="w-2 h-2 rounded-full bg-green mt-1.5 flex-shrink-0" />
+                )}
               </div>
-              {!notif.readAt && (
-                <div className="w-2 h-2 rounded-full bg-green mt-1.5 flex-shrink-0" />
-              )}
             </Card>
           ))}
         </div>

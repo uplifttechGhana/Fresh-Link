@@ -52,25 +52,35 @@ export function TransportNotifications() {
   const renderNotification = (n: any) => (
     <Card
       key={n.id}
-      className={`p-4 flex gap-4 cursor-pointer ${!n.readAt ? 'bg-white' : 'bg-gray-50/50'}`}
+      className={`overflow-hidden cursor-pointer ${!n.readAt ? '' : 'opacity-80'}`}
       onClick={() => !n.readAt && markOne.mutate(n.id)}
     >
-      <div
-        className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getIconBg(n.type)}`}
-      >
-        {getIcon(n.type)}
-      </div>
-      <div className="flex-1">
-        <div className="flex justify-between items-start mb-1">
-          <h4 className={`text-sm ${!n.readAt ? 'font-bold text-ink' : 'font-medium text-gray-700'}`}>
-            {n.title}
-          </h4>
-          {!n.readAt && <div className="w-2 h-2 rounded-full bg-green mt-1.5" />}
+      {/* Logo watermark */}
+      <img
+        src="/freshlink-logo.png"
+        alt=""
+        aria-hidden
+        className="absolute inset-0 w-full h-full object-contain object-center pointer-events-none select-none"
+        style={{ opacity: 0.07 }}
+      />
+      <div className="relative flex gap-4 p-4">
+        <div
+          className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getIconBg(n.type)}`}
+        >
+          {getIcon(n.type)}
         </div>
-        <p className="text-xs text-muted mb-2 leading-relaxed">{n.body}</p>
-        <span className="text-[10px] font-medium text-gray-400">
-          {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
+        <div className="flex-1">
+          <div className="flex justify-between items-start mb-1">
+            <h4 className={`text-sm ${!n.readAt ? 'font-bold text-ink' : 'font-medium text-muted'}`}>
+              {n.title}
+            </h4>
+            {!n.readAt && <div className="w-2 h-2 rounded-full bg-green mt-1.5" />}
+          </div>
+          <p className="text-xs text-muted mb-2 leading-relaxed">{n.body}</p>
+          <span className="text-[10px] font-medium text-muted/70">
+            {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
       </div>
     </Card>
   );

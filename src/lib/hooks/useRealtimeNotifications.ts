@@ -15,41 +15,65 @@ const ICON_BY_TYPE: Record<string, string> = {
   system: '🌱',
 };
 
-function NotifToast({ title, body, type }: { title: string; body: string; type: string }) {
+function NotifToast({ title, body }: { title: string; body: string; type: string }) {
   return React.createElement(
     'div',
-    { style: { position: 'relative', overflow: 'hidden', borderRadius: '20px', minHeight: '72px', width: '100%' } },
-    // Background logo — centered, large, low opacity
+    {
+      style: {
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: '20px',
+        minHeight: '76px',
+        width: '100%',
+        background: 'rgba(255,255,255,0.15)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      },
+    },
+    /* Logo — large, centered watermark */
     React.createElement('img', {
       src: '/freshlink-logo.png',
       alt: '',
       'aria-hidden': true,
       style: {
         position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover',
-        objectPosition: 'center',
-        opacity: 0.12,
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '75%',
+        objectFit: 'contain',
+        opacity: 0.35,
         pointerEvents: 'none',
-        userSelect: 'none',
       },
     }),
-    // Foreground content
+    /* Content row */
     React.createElement(
       'div',
-      { style: { position: 'relative', display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '4px 0' } },
+      { style: { position: 'relative', display: 'flex', alignItems: 'center', gap: '12px', padding: '4px 0' } },
+      /* App icon circle */
       React.createElement(
         'div',
-        { style: { width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(21,128,61,0.2)', flexShrink: 0, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+        {
+          style: {
+            width: '44px', height: '44px', borderRadius: '50%',
+            overflow: 'hidden', flexShrink: 0,
+            border: '2px solid rgba(21,128,61,0.35)',
+            background: 'rgba(255,255,255,0.9)',
+            boxShadow: '0 2px 8px rgba(14,77,44,0.18)',
+          },
+        },
         React.createElement('img', { src: '/app-icon-192.png', alt: 'FreshLink', style: { width: '100%', height: '100%', objectFit: 'cover' } }),
       ),
+      /* Text */
       React.createElement(
         'div',
         { style: { flex: 1, minWidth: 0 } },
-        React.createElement('p', { style: { fontWeight: 700, fontSize: '14px', color: 'var(--color-ink)', lineHeight: 1.3, margin: 0 } }, title),
-        React.createElement('p', { style: { fontSize: '12px', color: 'var(--color-muted)', marginTop: '2px', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } }, body),
+        React.createElement('p', {
+          style: { fontWeight: 700, fontSize: '14px', color: '#FFFFFF', lineHeight: 1.3, margin: 0, textShadow: '0 1px 3px rgba(0,0,0,0.3)' },
+        }, title),
+        React.createElement('p', {
+          style: { fontSize: '12px', color: 'rgba(255,255,255,0.85)', marginTop: '3px', lineHeight: 1.4 },
+        }, body),
       ),
     ),
   );
@@ -79,11 +103,11 @@ export function useRealtimeNotifications() {
         {
           duration: 6000,
           style: {
-            background: 'var(--color-card)',
-            border: '1px solid rgba(21,128,61,0.2)',
+            background: 'rgba(21,128,61,0.82)',
+            border: '1px solid rgba(255,255,255,0.3)',
             borderRadius: '20px',
-            padding: '12px 16px',
-            boxShadow: '0 8px 32px -8px rgba(14,77,44,0.25)',
+            padding: '14px 16px',
+            boxShadow: '0 8px 32px -8px rgba(14,77,44,0.4)',
           },
         },
       );
