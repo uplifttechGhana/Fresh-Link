@@ -27,6 +27,7 @@ export function TransportNotifications() {
   const earlier = notifications.filter((n) => !today.includes(n));
 
   const getIcon = (type: string) => {
+    if (type === 'system') return <img src="/app-icon-192.png" alt="FreshLink" className="w-8 h-8 object-contain rounded-full" />;
     if (type.includes('job') || type.includes('delivery') || type.includes('order'))
       return <Package size={20} className="text-green" />;
     if (type.includes('payment') || type.includes('wallet'))
@@ -39,6 +40,7 @@ export function TransportNotifications() {
   };
 
   const getIconBg = (type: string) => {
+    if (type === 'system') return 'bg-white border border-green-100';
     if (type.includes('job') || type.includes('delivery') || type.includes('order'))
       return 'bg-green-50';
     if (type.includes('payment') || type.includes('wallet')) return 'bg-green-50';

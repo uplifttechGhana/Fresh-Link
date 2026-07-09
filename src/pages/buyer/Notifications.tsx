@@ -5,6 +5,7 @@ import { Package, Truck, TrendingDown, Users, Receipt } from 'lucide-react';
 import { useNotifications, useMarkAllRead, type ApiNotification } from '../../lib/hooks/useNotifications';
 
 function getIcon(type: string) {
+  if (type === 'system') return <img src="/app-icon-192.png" alt="FreshLink" className="w-8 h-8 object-contain rounded-full" />;
   if (type.includes('order') || type.includes('Order')) return <Package size={20} className="text-green" />;
   if (type.includes('delivery') || type.includes('transit')) return <Truck size={20} className="text-orange" />;
   if (type.includes('price') || type.includes('drop')) return <TrendingDown size={20} className="text-blue-500" />;
@@ -14,6 +15,7 @@ function getIcon(type: string) {
 }
 
 function getIconBg(type: string) {
+  if (type === 'system') return 'bg-white border border-green-100';
   if (type.includes('payment') || type.includes('receipt') || type.includes('order'))
     return 'bg-green-50';
   if (type.includes('delivery') || type.includes('transit')) return 'bg-orange-soft';

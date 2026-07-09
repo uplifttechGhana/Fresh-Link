@@ -21,6 +21,7 @@ function getIcon(type: string) {
     case 'weather': return <CloudRain size={18} className="text-cyan-600" />;
     case 'reminder': return <Calendar size={18} className="text-pink-600" />;
     case 'warning': return <AlertTriangle size={18} className="text-red-500" />;
+    case 'system': return <img src="/app-icon-192.png" alt="FreshLink" className="w-8 h-8 object-contain rounded-full" />;
     default: return <Bell size={18} className="text-muted" />;
   }
 }
@@ -34,6 +35,7 @@ function getBg(type: string) {
     case 'weather': return 'bg-cyan-50';
     case 'reminder': return 'bg-pink-50';
     case 'warning': return 'bg-red-50';
+    case 'system': return 'bg-white border border-green-100';
     default: return 'bg-gray-50';
   }
 }
