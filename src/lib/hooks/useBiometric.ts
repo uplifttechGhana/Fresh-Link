@@ -3,14 +3,23 @@ import { isNative } from '../native';
 
 export type BiometricType = 'fingerprint' | 'face' | 'iris' | 'none';
 
+const BIOMETRIC_ENABLED_KEY = 'freshlink_biometric_enabled';
+
 interface BiometricState {
   available: boolean;
   biometryType: BiometricType;
   enrolled: boolean;
+  /** True if the user has previously logged in and biometric is armed */
+  hasSavedSession: boolean;
 }
 
 async function checkAvailability(): Promise<BiometricState> {
-  if (!isNative) return { available: false, biometryType: 'none', enrolled: false };
+  const hasSavedSession = !!(
+    localStorage.getItem(BIOMETRIC_ENABLED_KEY) &&
+    localStorage.getItem('refresh_token')
+  );
+
+  if (!isNative) return { available: false, biometryType: 'none', enrolled: false, hasSavedSession };
 
   try {
     const { BiometricAuth, BiometryType } = await import('@aparajita/capacitor-biometric-auth');
@@ -32,20 +41,37 @@ async function checkAvailability(): Promise<BiometricState> {
       available: info.isAvailable,
       biometryType,
       enrolled: info.isEnrolled ?? info.isAvailable,
+      hasSavedSession,
     };
   } catch {
-    return { available: false, biometryType: 'none', enrolled: false };
+    return { available: false, biometryType: 'none', enrolled: false, hasSavedSession };
   }
 }
 
+/** Call this after a successful password login to arm biometric for future logins */
+export function enableBiometricLogin() {
+  localStorage.setItem(BIOMETRIC_ENABLED_KEY, '1');
+}
+
+/** Call this on logout to disarm biometric */
+export function disableBiometricLogin() {
+  localStorage.removeItem(BIOMETRIC_ENABLED_KEY);
+}
+
+/**
+ * Show the biometric prompt. Returns true if the user passed biometric/device-credential check.
+ * Does NOT log the user in — the caller must handle the actual login using the refresh token.
+ */
 export async function authenticateWithBiometric(reason?: string): Promise<boolean> {
   if (!isNative) return false;
   try {
     const { BiometricAuth } = await import('@aparajita/capacitor-biometric-auth');
     await BiometricAuth.authenticate({
       reason: reason ?? 'Log in to FreshLink',
-      cancelTitle: 'Use password',
-      allowDeviceCredential: true,
+      cancelTitle: 'Cancel',
+      // false = only biometric, no PIN/pattern fallback shown
+      // This removes the "use numeric" button that confused the user
+      allowDeviceCredential: false,
     });
     return true;
   } catch {
@@ -58,6 +84,7 @@ export function useBiometric() {
     available: false,
     biometryType: 'none',
     enrolled: false,
+    hasSavedSession: false,
   });
 
   useEffect(() => {
