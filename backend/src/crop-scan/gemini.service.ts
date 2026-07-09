@@ -30,6 +30,15 @@ const MODEL_FALLBACKS = [
   'gemini-1.5-flash-8b',
 ];
 
+const CHAT_SYSTEM = `You are Gemini, a friendly agricultural AI assistant for Fresh-Link, a platform for Ghanaian farmers, buyers, and transporters. Help farmers with:
+- Crop care, planting, and harvesting advice
+- Identifying plant diseases and pests
+- Best practices for common Ghana crops (maize, cassava, tomato, pepper, cocoa, plantain, yam, rice, groundnut, cowpea, okra)
+- Market pricing, storage, and post-harvest handling
+- Weather and irrigation guidance
+
+Keep answers concise, practical, and suited for smallholder farmers in Ghana. If a question is unrelated to farming, agriculture, or food, politely redirect the user to farming topics. Respond in plain text without markdown formatting.`;
+
 const SCAN_PROMPT = `You are an agricultural assistant for farmers in Ghana. Analyze this crop or plant photo.
 
 Respond ONLY with valid JSON matching this schema (no markdown):
@@ -117,6 +126,34 @@ export class GeminiService {
       workingModel: null,
       error: 'No Gemini model responded. Check API key and enable Generative Language API.',
     };
+  }
+
+  async chat(message: string): Promise<string> {
+    const apiKey = this.readApiKey();
+    if (!apiKey) {
+      throw new ServiceUnavailableException(
+        'Gemini AI is not configured. Ask an admin to set GEMINI_API_KEY.',
+      );
+    }
+
+    const prompt = `${CHAT_SYSTEM}\n\nUser: ${message}\nAssistant:`;
+    const errors: string[] = [];
+
+    for (const model of this.configuredModels()) {
+      try {
+        const reply = await this.generateText(model, apiKey, prompt);
+        return reply.replace(/^Assistant:\s*/i, '').trim();
+      } catch (err) {
+        const msg = this.extractErrorMessage(err);
+        errors.push(`${model}: ${msg}`);
+        this.logger.warn(`Gemini chat failed for ${model}: ${msg}`);
+        if (this.isAuthError(err)) break;
+      }
+    }
+
+    throw new ServiceUnavailableException(
+      errors[0] ?? 'AI assistant is temporarily unavailable. Please try again.',
+    );
   }
 
   async analyzeCropImage(

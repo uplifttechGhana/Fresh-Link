@@ -290,7 +290,7 @@ export function CropScan() {
               </div>
             )}
 
-            <Button variant="secondary" className="w-full bg-white/95" onClick={reset}>
+            <Button variant="primary" className="w-full bg-green-600 hover:bg-green-700" onClick={reset}>
               <span className="inline-flex items-center gap-2">
                 <img src={cropScannerIcon} alt="" className="h-5 w-5 object-contain" />
                 Scan another photo

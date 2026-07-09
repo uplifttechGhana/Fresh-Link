@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { GeminiChatSheet } from '../../components/ui/GeminiChatSheet';
 import { Play, BookOpen, Search, Loader2 } from 'lucide-react';
 import cropScannerIcon from '../../assets/icons/crop-scanner.gif';
 import cropScanSoilBg from '../../assets/photos/crop-scan-soil.jpg';
@@ -17,6 +19,7 @@ export function KnowledgeHub() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string | undefined>(undefined);
   const [query, setQuery] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
 
   const { data: videos = [], isLoading: videosLoading } = useYouTubeVideos(activeCategory, query);
   const { data: articles = [], isLoading: articlesLoading } = useKnowledgeArticles(activeCategory);
@@ -27,10 +30,10 @@ export function KnowledgeHub() {
   );
 
   return (
-    <div className="w-full h-full bg-cream flex flex-col">
+    <div className="w-full h-full bg-cream flex flex-col relative">
       <TopBar title="Knowledge Hub" showBack />
 
-      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-8">
+      <div className="flex-1 overflow-y-auto px-6 pt-4 pb-24">{/* extra bottom pad for FAB */}
         <Card
           leaves={false}
           className="relative overflow-hidden p-4 mb-6 cursor-pointer border-0 bg-transparent hover:shadow-lg transition-shadow min-h-[5.5rem]"
@@ -153,6 +156,18 @@ export function KnowledgeHub() {
           </div>
         )}
       </div>
+
+      {/* Gemini floating action button */}
+      <button
+        type="button"
+        onClick={() => setChatOpen(true)}
+        aria-label="Chat with Gemini AI"
+        className="absolute bottom-6 right-5 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+      >
+        <Sparkles size={26} className="text-white" />
+      </button>
+
+      <GeminiChatSheet open={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 }
