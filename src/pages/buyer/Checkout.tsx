@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -20,6 +22,8 @@ const TIME_SLOTS = [
 ];
 
 export function Checkout() {
+  const navigate = useNavigate();
+  const browserListenerRef = useRef<{ remove: () => void } | null>(null);
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
 
@@ -28,7 +32,20 @@ export function Checkout() {
 
   const deliveryFee = config?.deliveryFee ?? 15.0;
 
-  const [delivery, setDelivery] = useState<DeliverySelection | null>(null);
+  // Persist delivery selection in sessionStorage so it survives navigation
+  // back from the Paystack browser or any other temporary page unmount.
+  const [delivery, setDeliveryState] = useState<DeliverySelection | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('checkout_delivery');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  const setDelivery = (sel: DeliverySelection | null) => {
+    setDeliveryState(sel);
+    if (sel) sessionStorage.setItem('checkout_delivery', JSON.stringify(sel));
+    else sessionStorage.removeItem('checkout_delivery');
+  };
+
   const [addressSheetOpen, setAddressSheetOpen] = useState(false);
   const [paymentSheetOpen, setPaymentSheetOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -40,6 +57,9 @@ export function Checkout() {
   const initPayment = useInitOrderPayment();
 
   useEffect(() => {
+    // Only pre-fill from saved addresses if the user has no current selection
+    // (avoids overwriting a selection that was restored from sessionStorage).
+    if (delivery) return;
     const saved = loadSavedAddresses();
     if (saved.length === 0) return;
     const preferred = saved.find((a) => a.label === 'Home') ?? saved[0];
@@ -49,6 +69,7 @@ export function Checkout() {
       lat: preferred.lat,
       lng: preferred.lng,
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Set default payment method once loaded
@@ -83,7 +104,25 @@ export function Checkout() {
       const payment = await initPayment.mutateAsync(order.id);
 
       clearCart();
-      window.location.href = payment.authorizationUrl;
+      sessionStorage.removeItem('checkout_delivery');
+
+      if (Capacitor.isNativePlatform()) {
+        // On native, open Paystack inside an in-app browser so the user
+        // isn't stranded in the system browser after payment.
+        const { Browser } = await import('@capacitor/browser');
+        // Clean up any previous listener
+        browserListenerRef.current?.remove();
+        browserListenerRef.current = await Browser.addListener('browserFinished', () => {
+          browserListenerRef.current?.remove();
+          browserListenerRef.current = null;
+          // Paystack redirected or user closed the browser — send them to
+          // their orders so they can see the new order's payment status.
+          navigate('/buyer/orders', { replace: true });
+        });
+        await Browser.open({ url: payment.authorizationUrl, presentationStyle: 'popover' });
+      } else {
+        window.location.href = payment.authorizationUrl;
+      }
     } catch (err: any) {
       const msg =
         err?.body?.message ?? err?.message ?? 'Failed to place order. Please try again.';

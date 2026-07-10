@@ -166,7 +166,7 @@ export function DeliveryAddressSheet({
           </div>
           <div>
             <p className="font-bold text-sm text-ink">Use current location</p>
-            <p className="text-xs text-muted">Like Bolt — pin where you are now</p>
+            <p className="text-xs text-muted">Detect your current GPS location</p>
           </div>
         </button>
 

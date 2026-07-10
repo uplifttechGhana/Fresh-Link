@@ -5,23 +5,15 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ChatService {
   constructor(private prisma: PrismaService) {}
 
-  private async assertConversationAccess(
+  private assertConversationAccess(
     conv: { id: string; buyerId: string; farmerId: string; orderId: string | null },
     userId: string,
   ) {
+    // Only the two direct participants of a conversation may access it.
+    // Transporters now have their own separate 1-on-1 conversation with the
+    // buyer (created by getOrCreateDeliveryConversation) so they no longer
+    // need piggy-back access to the buyer-farmer thread.
     if (conv.buyerId === userId || conv.farmerId === userId) return;
-
-    if (conv.orderId) {
-      const job = await this.prisma.transportJob.findFirst({
-        where: {
-          orderId: conv.orderId,
-          transporter: { userId },
-          status: { not: 'cancelled' },
-        },
-      });
-      if (job) return;
-    }
-
     throw new ForbiddenException();
   }
 
@@ -35,7 +27,11 @@ export class ChatService {
     });
   }
 
-  /** Open (or reuse) the in-app thread for an active delivery job. */
+  /** Open (or reuse) the in-app thread for an active delivery job.
+   *
+   * Each delivery creates a dedicated 1-on-1 between the transporter and the
+   * buyer.  The farmer's separate buyer-farmer thread remains private.
+   */
   async getOrCreateDeliveryConversation(transporterUserId: string, jobId: string) {
     const job = await this.prisma.transportJob.findUnique({
       where: { id: jobId },
@@ -44,7 +40,6 @@ export class ChatService {
         order: {
           include: {
             buyer: { select: { id: true } },
-            farmer: { include: { user: { select: { id: true } } } },
           },
         },
         request: { include: { farmer: { include: { user: { select: { id: true } } } } } },
@@ -57,14 +52,22 @@ export class ChatService {
     }
 
     if (job.order) {
-      return this.getOrCreateConversation(
-        job.order.buyer.id,
-        job.order.farmer.user.id,
-        job.orderId!,
-      );
+      // Transporter ↔ Buyer: use buyerId=transporter, farmerId=buyer so each
+      // side can find the conversation via their own userId, and the actual
+      // farmer's private thread is untouched.
+      const buyerId = transporterUserId;
+      const farmerId = job.order.buyer.id;
+      const existing = await this.prisma.conversation.findFirst({
+        where: { buyerId, farmerId, orderId: job.orderId },
+      });
+      if (existing) return existing;
+      return this.prisma.conversation.create({
+        data: { buyerId, farmerId, orderId: job.orderId },
+      });
     }
 
     if (job.request) {
+      // Transporter ↔ Farmer (transport request, no order involved)
       const farmerUserId = job.request.farmer.user.id;
       const existing = await this.prisma.conversation.findFirst({
         where: { buyerId: transporterUserId, farmerId: farmerUserId, orderId: null },
@@ -90,19 +93,12 @@ export class ChatService {
     return job?.transporter?.userId ?? null;
   }
 
-  async getUserConversations(userId: string, role?: string) {
+  async getUserConversations(userId: string, _role?: string) {
+    // Each user can only see conversations they are a direct participant of
+    // (either buyerId or farmerId).  Transporters access their delivery chats
+    // through the same columns because getOrCreateDeliveryConversation stores
+    // the transporter as buyerId and the buyer/farmer as farmerId.
     const orConditions: any[] = [{ buyerId: userId }, { farmerId: userId }];
-
-    if (role === 'transport') {
-      const assignedOrders = await this.prisma.transportJob.findMany({
-        where: { transporter: { userId }, orderId: { not: null } },
-        select: { orderId: true },
-      });
-      const orderIds = assignedOrders.map((j) => j.orderId).filter(Boolean) as string[];
-      if (orderIds.length) {
-        orConditions.push({ orderId: { in: orderIds } });
-      }
-    }
 
     const convs = await this.prisma.conversation.findMany({
       where: { OR: orConditions },

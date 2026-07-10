@@ -145,11 +145,15 @@ export function useTransportProfile() {
 
 export function useSetAvailability() {
   const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
   return useMutation({
     mutationFn: (isAvailable: boolean) =>
       api.patch<TransportProfile>('/transport/availability', { isAvailable }),
     onSuccess: (profile) => {
-      qc.setQueryData(transportKeys.profile(), profile);
+      // Update the exact cache key that useTransportProfile reads from.
+      // Without the userId the key doesn't match and the UI only refreshes on
+      // the next page load.
+      qc.setQueryData(transportKeys.profile(userId), profile);
     },
   });
 }
