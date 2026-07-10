@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { Phone, MessageCircle, CheckCircle2, Navigation } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { AppGoogleMap, MapMarker } from '../../components/ui/AppGoogleMap';
 import { useOrder, formatOrderStatus, useVerifyOrderPayment } from '../../lib/hooks/useOrders';
 import { useOrderStatusSocket, useStartConversation } from '../../lib/hooks/useChat';
 import { useQueryClient } from '@tanstack/react-query';
@@ -55,8 +55,16 @@ export function OrderTracking() {
     }, [id, qc]),
   );
 
-  const accraPosition: [number, number] = [5.6037, -0.187];
   const currentStepIdx = stepIndex(order?.status ?? 'pending');
+
+  // For the in-app map: route from farmer pickup → delivery address
+  const mapRouteFrom = order?.farmer?.location ?? order?.farmer?.farmName;
+  const mapRouteTo   = order?.deliveryAddress ?? order?.farmer?.location;
+
+  const mapMarkers: MapMarker[] = [];
+  if (order?.farmer?.location) {
+    mapMarkers.push({ id: 'pickup', lat: 5.6037, lng: -0.187, color: 'pickup', title: 'Pickup' });
+  }
 
   const driver = order?.transportJob?.transporter;
   const driverName = driver?.user?.name ?? 'Driver';
@@ -110,27 +118,17 @@ export function OrderTracking() {
         <TopBar title="Track Order" showBack transparent />
       </div>
 
-      {/* Map */}
-      <div className="h-[40%] w-full bg-gray-200 relative z-0">
-        <MapContainer
-          center={accraPosition}
-          zoom={13}
-          style={{
-            height: '100%',
-            width: '100%'
-          }}
-          zoomControl={false}>
-          
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' />
-          
-          <Marker position={accraPosition}>
-            <Popup>
-              {order?.status === 'in_transit' ? 'Driver Location' : 'Delivery Zone'}
-            </Popup>
-          </Marker>
-        </MapContainer>
+      {/* In-app Google Map with live route */}
+      <div className="h-[40%] w-full relative z-0">
+        <AppGoogleMap
+          height="100%"
+          defaultCenter={{ lat: 5.6037, lng: -0.187 }}
+          routeFrom={mapRouteFrom}
+          routeTo={mapRouteTo}
+          markers={mapMarkers}
+          showTraffic
+          showControls={false}
+        />
       </div>
 
       <div className="flex-1 bg-cream rounded-t-[2rem] -mt-6 z-10 relative px-6 pt-6 pb-6 overflow-y-auto no-scrollbar">

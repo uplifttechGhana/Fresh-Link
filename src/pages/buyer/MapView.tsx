@@ -1,128 +1,54 @@
-import React, { useState, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Skeleton } from '../../components/ui/States';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { MapPin, X, LocateFixed, ZoomIn, ZoomOut, Navigation } from 'lucide-react';
+import { AppGoogleMap, MapMarker } from '../../components/ui/AppGoogleMap';
+import { MapPin, X, Navigation } from 'lucide-react';
 import { useFarmersList, FarmerSummary } from '../../lib/hooks/useProduce';
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-const DEFAULT_CENTER: [number, number] = [5.635, -0.155];
-
-// ─── Map control helpers ─────────────────────────────────────────────────────
-
-function MapControls({
-  onLocate,
-  locating,
-}: {
-  onLocate: () => void;
-  locating: boolean;
-}) {
-  const map = useMap();
-
-  return (
-    <div className="absolute bottom-48 right-4 z-[1000] flex flex-col gap-2">
-      {/* Zoom In */}
-      <button
-        onClick={() => map.zoomIn()}
-        className="w-10 h-10 bg-white shadow-md rounded-xl flex items-center justify-center text-ink active:scale-95 transition-transform"
-        aria-label="Zoom in"
-      >
-        <ZoomIn size={18} />
-      </button>
-
-      {/* Zoom Out */}
-      <button
-        onClick={() => map.zoomOut()}
-        className="w-10 h-10 bg-white shadow-md rounded-xl flex items-center justify-center text-ink active:scale-95 transition-transform"
-        aria-label="Zoom out"
-      >
-        <ZoomOut size={18} />
-      </button>
-
-      {/* Locate Me */}
-      <button
-        onClick={onLocate}
-        className={`w-10 h-10 shadow-md rounded-xl flex items-center justify-center active:scale-95 transition-transform ${
-          locating ? 'bg-green text-white animate-pulse' : 'bg-white text-ink'
-        }`}
-        aria-label="Locate me"
-      >
-        <LocateFixed size={18} />
-      </button>
-    </div>
-  );
-}
-
-function LocateController({
-  trigger,
-  onLocated,
-}: {
-  trigger: number;
-  onLocated: (pos: [number, number]) => void;
-}) {
-  const map = useMap();
-  const lastTrigger = useRef(0);
-
-  React.useEffect(() => {
-    if (trigger === 0 || trigger === lastTrigger.current) return;
-    lastTrigger.current = trigger;
-    map.locate({ setView: true, maxZoom: 15 });
-    map.once('locationfound', (e) => onLocated([e.latlng.lat, e.latlng.lng]));
-  }, [trigger, map, onLocated]);
-
-  return null;
-}
-
-// ─── Main component ──────────────────────────────────────────────────────────
+const DEFAULT_CENTER = { lat: 5.635, lng: -0.155 };
 
 export function MapView() {
   const navigate = useNavigate();
   const [selectedFarmer, setSelectedFarmer] = useState<FarmerSummary | null>(null);
-  const [locateTrigger, setLocateTrigger] = useState(0);
-  const [locating, setLocating] = useState(false);
-  const [userPos, setUserPos] = useState<[number, number] | null>(null);
+  // Route: from user location → selected farm (shown on the map)
+  const [routeTo, setRouteTo] = useState<string | undefined>();
+  const [routeFrom, setRouteFrom] = useState<string | undefined>();
 
   const { data, isLoading } = useFarmersList({ limit: 100 });
   const farmers = (data?.items ?? []).filter(
     (f) => f.latitude != null && f.longitude != null,
   );
 
-  const handleLocate = () => {
-    setLocating(true);
-    setLocateTrigger((n) => n + 1);
-  };
+  const markers: MapMarker[] = farmers.map((f) => ({
+    id: f.id,
+    lat: f.latitude!,
+    lng: f.longitude!,
+    color: 'farm',
+    title: f.farmName ?? f.user.name,
+    label: f.farmName ?? f.user.name,
+  }));
 
-  const handleLocated = (pos: [number, number]) => {
-    setUserPos(pos);
-    setLocating(false);
-  };
-
-  const openDirectionsToFarmer = (farmer: FarmerSummary) => {
-    const dest = encodeURIComponent(
+  const handleMarkerClick = (id: string) => {
+    const farmer = farmers.find((f) => f.id === id);
+    if (!farmer) return;
+    setSelectedFarmer(farmer);
+    // Draw in-app route from user's GPS to the farm
+    navigator.geolocation?.getCurrentPosition(({ coords }) => {
+      setRouteFrom(`${coords.latitude},${coords.longitude}`);
+    });
+    setRouteTo(
       farmer.location ?? `${farmer.latitude},${farmer.longitude}`,
-    );
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`,
-      '_blank',
     );
   };
 
   return (
     <div className="w-full h-full bg-cream flex flex-col relative">
       <div className="absolute top-0 inset-x-0 z-20">
-        <TopBar title="Nearby Farmers" showBack transparent />
+        <TopBar title="Nearby Farms" showBack transparent />
       </div>
 
       <div className="flex-1 relative z-10">
@@ -131,41 +57,16 @@ export function MapView() {
             <Skeleton className="w-full h-full rounded-2xl" />
           </div>
         ) : (
-          <MapContainer
-            center={DEFAULT_CENTER}
-            zoom={13}
-            zoomControl={false}
-            style={{ width: '100%', height: '100%' }}
-          >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
-            />
-
-            {farmers.map((farmer) => (
-              <Marker
-                key={farmer.id}
-                position={[farmer.latitude!, farmer.longitude!]}
-                eventHandlers={{ click: () => setSelectedFarmer(farmer) }}
-              />
-            ))}
-
-            {/* User's detected location */}
-            {userPos && (
-              <Marker
-                position={userPos}
-                icon={L.divIcon({
-                  className: '',
-                  html: `<div style="width:14px;height:14px;background:#3B82F6;border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>`,
-                  iconSize: [14, 14],
-                  iconAnchor: [7, 7],
-                })}
-              />
-            )}
-
-            <MapControls onLocate={handleLocate} locating={locating} />
-            <LocateController trigger={locateTrigger} onLocated={handleLocated} />
-          </MapContainer>
+          <AppGoogleMap
+            height="100%"
+            defaultCenter={DEFAULT_CENTER}
+            markers={markers}
+            routeFrom={routeFrom}
+            routeTo={routeTo}
+            onMarkerClick={handleMarkerClick}
+            showTraffic
+            showControls
+          />
         )}
       </div>
 
@@ -180,7 +81,11 @@ export function MapView() {
           >
             <Card className="p-4 relative shadow-float">
               <button
-                onClick={() => setSelectedFarmer(null)}
+                onClick={() => {
+                  setSelectedFarmer(null);
+                  setRouteTo(undefined);
+                  setRouteFrom(undefined);
+                }}
                 className="absolute top-4 right-4 text-muted hover:text-ink"
               >
                 <X size={20} />
@@ -219,20 +124,17 @@ export function MapView() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <Button
-                  fullWidth
-                  variant="outline"
-                  onClick={() => openDirectionsToFarmer(selectedFarmer)}
-                  className="flex items-center justify-center gap-2"
-                >
-                  <Navigation size={16} />
-                  Directions
-                </Button>
-                <Button fullWidth onClick={() => navigate(`/buyer/farmer/${selectedFarmer.id}`)}>
-                  View Farm
-                </Button>
-              </div>
+              {/* Route already drawn on map — button just scrolls map into view */}
+              {routeTo && (
+                <p className="text-xs text-green font-medium mb-3 flex items-center gap-1">
+                  <Navigation size={12} />
+                  Route shown on map above
+                </p>
+              )}
+
+              <Button fullWidth onClick={() => navigate(`/buyer/farmer/${selectedFarmer.id}`)}>
+                View Farm
+              </Button>
             </Card>
           </motion.div>
         )}
