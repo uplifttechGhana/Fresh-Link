@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Phone, MessageCircle, CheckCircle2 } from 'lucide-react';
+import { Phone, MessageCircle, CheckCircle2, Navigation } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { useOrder, formatOrderStatus, useVerifyOrderPayment } from '../../lib/hooks/useOrders';
@@ -68,6 +68,18 @@ export function OrderTracking() {
     : 'Vehicle assigned on pickup';
 
   const farmerUserId = order?.farmer?.userId;
+
+  const openDirections = () => {
+    if (!order) return;
+    // Use delivery address if available; fall back to a generic destination label
+    const destination = encodeURIComponent(
+      order.deliveryAddress ?? order.farmer?.location ?? 'Accra, Ghana',
+    );
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`,
+      '_blank',
+    );
+  };
 
   const handleChat = async () => {
     if (!order) return;
@@ -156,17 +168,22 @@ export function OrderTracking() {
               onClick={handleChat}
               aria-label="Message"
               className="w-10 h-10 rounded-full bg-green-50 text-green flex items-center justify-center">
-              
               <MessageCircle size={18} />
             </button>
             {driverPhone && (
               <button
                 onClick={() => window.location.href = `tel:${driverPhone}`}
                 className="w-10 h-10 rounded-full bg-green text-white flex items-center justify-center shadow-sm">
-                
                 <Phone size={18} />
               </button>
             )}
+            <button
+              onClick={openDirections}
+              aria-label="Get Directions"
+              title="Open in Google Maps (avoids traffic automatically)"
+              className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-sm">
+              <Navigation size={18} />
+            </button>
           </div>
         </Card>
 
