@@ -30,6 +30,39 @@ export function useWatchPosition(enabled = true) {
   return position;
 }
 
+/** Animated car SVG used for the driver's live position marker */
+function carIcon(color = '#2563EB') {
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="40" height="40">
+  <!-- drop-shadow backing circle -->
+  <circle cx="24" cy="26" r="18" fill="white" opacity="0.9"
+    style="filter:drop-shadow(0 2px 6px rgba(0,0,0,0.35))"/>
+  <!-- car body -->
+  <rect x="10" y="22" width="28" height="12" rx="3" fill="${color}"/>
+  <!-- cabin -->
+  <path d="M15 22 L18 14 H30 L33 22 Z" fill="${color}"/>
+  <!-- windscreen highlight -->
+  <path d="M19 14.5 L17 22 H31 L29 14.5 Z" fill="white" opacity="0.25"/>
+  <!-- left wheel -->
+  <circle cx="16" cy="34" r="4" fill="#1e293b"/>
+  <circle cx="16" cy="34" r="2" fill="#94a3b8"/>
+  <!-- right wheel -->
+  <circle cx="32" cy="34" r="4" fill="#1e293b"/>
+  <circle cx="32" cy="34" r="2" fill="#94a3b8"/>
+  <!-- headlights -->
+  <rect x="10" y="24" width="3" height="3" rx="1" fill="#fde68a"/>
+  <rect x="35" y="24" width="3" height="3" rx="1" fill="#fde68a"/>
+</svg>`.trim();
+
+  return L.divIcon({
+    className: '',
+    html: svg,
+    iconSize: [40, 40],
+    iconAnchor: [20, 32],   // anchor at bottom-centre of the car
+    popupAnchor: [0, -32],
+  });
+}
+
 function dotIcon(color: string, rounded: boolean) {
   return L.divIcon({
     className: '',
@@ -48,8 +81,8 @@ function numberedIcon(n: number) {
   });
 }
 
-const driverIcon = dotIcon('#2563EB', true);
-const pickupIcon = dotIcon('#15803D', true);
+const driverIcon  = carIcon('#2563EB');   // blue car for the transporter
+const pickupIcon  = dotIcon('#15803D', true);
 const dropoffIcon = dotIcon('#EA580C', false);
 
 function FitBounds({ positions }: { positions: [number, number][] }) {
