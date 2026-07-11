@@ -9,6 +9,7 @@
 Connecting farmers, buyers, transporters, investors, and administrators through a mobile-first platform — with USSD & SMS access for users on basic phones.
 
 [![Live App](https://img.shields.io/badge/Live%20App-fresh--link--weld.vercel.app-22c55e?style=for-the-badge&logo=vercel)](https://fresh-link-weld.vercel.app)
+[![Download APK](https://img.shields.io/badge/Download%20APK-v1.0-3DDC84?style=for-the-badge&logo=android)](https://github.com/uplifttechGhana/Fresh-Link/releases/download/v1.0.0/FreshLink-v1.0.apk)
 [![Backend](https://img.shields.io/badge/API-Railway-7c3aed?style=for-the-badge&logo=railway)](https://fresh-link-production.up.railway.app/api/docs)
 [![API Docs](https://img.shields.io/badge/Swagger-API%20Docs-85EA2D?style=for-the-badge&logo=swagger)](https://fresh-link-production.up.railway.app/api/docs)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Web-3DDC84?style=for-the-badge&logo=android)](https://fresh-link-weld.vercel.app)
@@ -1008,7 +1009,19 @@ npm run dev
 
 ## 14. Capacitor / APK Build
 
-### Development APK
+### Direct Download (Latest Build)
+
+| Channel | Link |
+|---------|------|
+| **Web App** | [fresh-link-weld.vercel.app](https://fresh-link-weld.vercel.app) |
+| **Android APK** | [Download FreshLink-v1.0.apk](https://github.com/uplifttechGhana/Fresh-Link/releases/download/v1.0.0/FreshLink-v1.0.apk) |
+| **All Releases** | [github.com/uplifttechGhana/Fresh-Link/releases](https://github.com/uplifttechGhana/Fresh-Link/releases) |
+
+> **Android install note:** Go to Settings → Security → Enable "Install from unknown sources" before installing the APK.
+
+---
+
+### Build From Source — Development APK
 
 ```bash
 # 1. Build the React app
