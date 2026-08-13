@@ -5,11 +5,12 @@ import { MapPin, Package, Clock, Loader2, Search, X } from 'lucide-react';
 import { ApiError } from '../../lib/api';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
 import { BottomNav } from '../../components/ui/BottomNav';
 import { JobsOverviewMap } from '../../components/transport/TransportMap';
 import { useAvailableJobs, useAcceptJob, useTransportProfile, type TransportJob } from '../../lib/hooks/useTransport';
-import { filterTransportJobs, getJobContact, contactAvatarUrl } from '../../lib/transportUtils';
+import { filterTransportJobs, getJobContact } from '../../lib/transportUtils';
 
 export function AvailableJobs() {
   const navigate = useNavigate();
@@ -188,11 +189,7 @@ function JobCard({ job, onAccepted, canAccept }: { job: TransportJob; onAccepted
         {contact ? (
           <>
             <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-              <img
-                src={contactAvatarUrl(contact)}
-                alt={contact.name}
-                className="w-full h-full object-cover"
-              />
+              <Avatar name={contact.name} src={contact.avatarUrl} className="w-full h-full" />
             </div>
             <div className="min-w-0">
               <span className="font-medium text-ink block truncate">{contact.name}</span>

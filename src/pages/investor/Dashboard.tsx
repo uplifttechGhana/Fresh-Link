@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { TrendingUp, Sprout, BadgeCheck, ChevronRight, PieChart, Loader2 } from 'lucide-react';
 import {
   useFundingRequests,
@@ -79,13 +80,11 @@ export function InvestorDashboard() {
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-2">
-                        <img
-                          src={
-                            inv.request.farmer.avatarUrl ??
-                            `https://i.pravatar.cc/150?u=${inv.request.farmer.name}`
-                          }
-                          alt={inv.request.farmer.name}
+                        <Avatar
+                          name={inv.request.farmer.name}
+                          src={inv.request.farmer.avatarUrl}
                           className="w-8 h-8 rounded-full bg-gray-100"
+                          textClassName="text-[10px]"
                         />
                         <div>
                           <h4 className="font-bold text-sm text-ink">{inv.request.farmer.name}</h4>
@@ -145,14 +144,7 @@ export function InvestorDashboard() {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 border-2 border-white shadow-sm">
-                        <img
-                          src={
-                            req.farmer.avatarUrl ??
-                            `https://i.pravatar.cc/150?u=${req.farmer.name}`
-                          }
-                          alt={req.farmer.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <Avatar name={req.farmer.name} src={req.farmer.avatarUrl} className="w-full h-full" />
                       </div>
                       <div>
                         <div className="flex items-center gap-1">

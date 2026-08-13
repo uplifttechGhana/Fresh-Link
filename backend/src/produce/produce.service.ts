@@ -2,7 +2,12 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProduceDto, UpdateProduceDto, ProduceQueryDto } from './dto/produce.dto';
 import { DEFAULT_PRODUCE_CATEGORIES } from './produce.constants';
-import { assertPersistableMediaUrls, sanitizeMediaUrls } from '../common/utils/media-url.util';
+import {
+  assertPersistableMediaUrls,
+  sanitizeMediaUrls,
+  assertPersistableMediaUrl,
+  sanitizeMediaUrl,
+} from '../common/utils/media-url.util';
 
 @Injectable()
 export class ProduceService {
@@ -13,10 +18,12 @@ export class ProduceService {
     if (!farmer) throw new ForbiddenException('Farmer profile not found');
 
     assertPersistableMediaUrls(dto.images);
+    assertPersistableMediaUrl(dto.video);
     const images = sanitizeMediaUrls(dto.images);
+    const video = sanitizeMediaUrl(dto.video);
 
     const produce = await this.prisma.produceListing.create({
-      data: { ...dto, images, farmerId: farmer.id },
+      data: { ...dto, images, video, farmerId: farmer.id },
     });
 
     // Record initial price
@@ -187,10 +194,14 @@ export class ProduceService {
     if (dto.images !== undefined) {
       assertPersistableMediaUrls(dto.images);
     }
+    if (dto.video) {
+      assertPersistableMediaUrl(dto.video);
+    }
 
     const data = {
       ...dto,
       ...(dto.images !== undefined ? { images: sanitizeMediaUrls(dto.images) } : {}),
+      ...(dto.video !== undefined ? { video: sanitizeMediaUrl(dto.video) || null } : {}),
     };
 
     const updated = await this.prisma.produceListing.update({

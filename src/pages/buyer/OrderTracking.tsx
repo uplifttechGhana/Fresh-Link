@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import { Phone, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { useOrder, formatOrderStatus, useVerifyOrderPayment } from '../../lib/hooks/useOrders';
 import { useOrderStatusSocket, useStartConversation } from '../../lib/hooks/useChat';
 import { useQueryClient } from '@tanstack/react-query';
@@ -124,8 +125,7 @@ export function OrderTracking() {
   const driver      = order?.transportJob?.transporter;
   const driverName  = driver?.user?.name ?? 'Driver';
   const driverPhone = driver?.user?.phone ?? '';
-  const driverAvatar = driver?.user?.avatarUrl
-    ?? `https://i.pravatar.cc/150?u=${order?.transportJob?.transporterId ?? 'driver'}`;
+  const driverAvatar = driver?.user?.avatarUrl ?? null;
   const vehicleLabel = driver
     ? `${driver.vehicleType} • ${driver.licensePlate ?? 'N/A'}`
     : 'Vehicle assigned on pickup';
@@ -209,7 +209,7 @@ export function OrderTracking() {
         {/* Driver Card */}
         <Card className="p-4 flex items-center gap-4 mb-8">
           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
-            <img src={driverAvatar} alt={driverName} className="w-full h-full object-cover" />
+            <Avatar name={driverName} src={driverAvatar} className="w-full h-full" />
           </div>
           <div className="flex-1">
             <h4 className="font-bold text-ink text-sm">{driverName}</h4>

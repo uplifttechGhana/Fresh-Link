@@ -253,6 +253,7 @@ model ProduceListing {
   stock       Float
   category    String?
   images      String[]
+  video       String?
   status      ProduceStatus @default(active)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt

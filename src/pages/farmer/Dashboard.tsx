@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import {
   TrendingUp, Package, Plus, Wallet, CloudSun, MessageSquare, Truck,
 } from 'lucide-react';
@@ -245,11 +246,7 @@ export function FarmerDashboard() {
                   onClick={() => navigate('/farmer/orders')}
                 >
                   <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
-                    <img
-                      src={order.buyer.avatarUrl ?? `https://i.pravatar.cc/150?u=${order.buyer.id}`}
-                      alt={order.buyer.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <Avatar name={order.buyer.name} src={order.buyer.avatarUrl} className="w-full h-full" />
                   </div>
                   <div className="flex-1">
                     <h4 className="font-bold text-sm text-ink">
@@ -295,11 +292,7 @@ export function FarmerDashboard() {
                     className="p-4 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => navigate(`/farmer/chat/${conv.id}`)}
                   >
-                    <img
-                      src={other.avatarUrl ?? `https://i.pravatar.cc/150?u=${conv.id}`}
-                      alt={other.name}
-                      className="w-10 h-10 rounded-full object-cover bg-gray-100"
-                    />
+                    <Avatar name={other.name} src={other.avatarUrl} className="w-10 h-10 rounded-full bg-gray-100" />
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline mb-0.5">
                         <h4 className="font-bold text-sm text-ink truncate">{other.name}</h4>

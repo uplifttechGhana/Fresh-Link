@@ -1,6 +1,7 @@
 import React from 'react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { Star, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
@@ -11,7 +12,7 @@ interface DriverReview {
   rating: number;
   comment: string | null;
   createdAt: string;
-  buyer?: { name: string } | null;
+  buyer?: { name: string; avatarUrl?: string | null } | null;
 }
 
 interface ReviewsResponse {
@@ -95,9 +96,9 @@ export function TransportRatings() {
                 {reviews.map((review) => (
                   <Card key={review.id} className="p-4">
                     <div className="flex items-start gap-3 mb-2">
-                      <img
-                        src={`https://i.pravatar.cc/150?u=${review.buyer?.name ?? review.id}`}
-                        alt={review.buyer?.name ?? 'Reviewer'}
+                      <Avatar
+                        name={review.buyer?.name}
+                        src={review.buyer?.avatarUrl}
                         className="w-10 h-10 rounded-full bg-gray-200"
                       />
                       <div className="flex-1">

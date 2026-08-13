@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Phone, MessageCircle, User } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import {
   useConversation,
   useConversationContact,
@@ -60,7 +61,6 @@ export function ChatContactProfile() {
     );
   }
 
-  const avatar = displayContact.avatarUrl ?? `https://i.pravatar.cc/150?u=${displayContact.id}`;
   const roleLabel = ROLE_LABELS[displayContact.role] ?? 'User';
 
   return (
@@ -70,7 +70,7 @@ export function ChatContactProfile() {
       <div className="flex-1 overflow-y-auto no-scrollbar px-6 pb-10">
         <div className="flex flex-col items-center pt-8 pb-10">
           <div className="w-32 h-32 rounded-full overflow-hidden bg-white shadow-md border-4 border-white mb-4">
-            <img src={avatar} alt={displayContact.name} className="w-full h-full object-cover" />
+            <Avatar name={displayContact.name} src={displayContact.avatarUrl} className="w-full h-full" textClassName="text-3xl" />
           </div>
           <h1 className="text-2xl font-display font-extrabold text-ink text-center">{displayContact.name}</h1>
           <span className="mt-2 text-xs font-bold text-green bg-green-100 px-3 py-1 rounded-full">

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, X, MapPin, Star } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { useFarmersList, type FarmerSummary } from '../../lib/hooks/useProduce';
 
 export function BrowseFarmers() {
@@ -71,7 +72,6 @@ export function BrowseFarmers() {
 
 function FarmerCard({ farmer, rank }: { farmer: FarmerSummary; rank: number }) {
   const navigate = useNavigate();
-  const avatar = farmer.user.avatarUrl ?? `https://i.pravatar.cc/150?u=${farmer.userId}`;
 
   return (
     <Card
@@ -80,7 +80,7 @@ function FarmerCard({ farmer, rank }: { farmer: FarmerSummary; rank: number }) {
     >
       <div className="relative flex-shrink-0">
         <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-sm">
-          <img src={avatar} alt={farmer.user.name} className="w-full h-full object-cover" />
+          <Avatar name={farmer.user.name} src={farmer.user.avatarUrl} className="w-full h-full" />
         </div>
         {rank <= 3 && (
           <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm"

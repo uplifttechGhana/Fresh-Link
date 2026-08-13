@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { TopBar } from '../../components/ui/TopBar';
 import { Button } from '../../components/ui/Button';
 import { AvatarUploadSheet } from '../../components/ui/AvatarUploadSheet';
+import { Avatar } from '../../components/ui/Avatar';
 import { useAuthStore } from '../../lib/authStore';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
-
-const DEFAULT_AVATAR = 'https://i.pravatar.cc/150?u=default';
 
 export function ProfileSettings() {
   const navigate = useNavigate();
@@ -17,14 +16,14 @@ export function ProfileSettings() {
 
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
-  const [avatar, setAvatar] = useState(user?.avatarUrl ?? DEFAULT_AVATAR);
+  const [avatar, setAvatar] = useState<string | null>(user?.avatarUrl ?? null);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (user?.name) setName(user.name);
     setEmail(user?.email ?? '');
-    if (user?.avatarUrl) setAvatar(user.avatarUrl);
+    setAvatar(user?.avatarUrl ?? null);
   }, [user]);
 
   const handleSave = async () => {
@@ -34,7 +33,7 @@ export function ProfileSettings() {
       const updated = await api.patch<typeof user>('/users/me', {
         name: name || undefined,
         email: email || undefined,
-        avatarUrl: avatar || undefined,
+        avatarUrl: avatar ?? undefined,
       });
       setAuth({ ...user, ...updated }, accessToken);
       toast.success('Profile updated');
@@ -58,7 +57,7 @@ export function ProfileSettings() {
             className="relative active:scale-95 transition-transform"
           >
             <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-sm">
-              <img src={avatar} alt="User" className="w-full h-full object-cover" />
+              <Avatar name={name || user?.name} src={avatar} className="w-full h-full" textClassName="text-2xl" />
             </div>
             <span className="absolute bottom-0 right-0 w-8 h-8 bg-green text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm text-sm">
               ✎

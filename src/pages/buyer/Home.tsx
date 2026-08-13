@@ -12,6 +12,7 @@ import {
 import { compareIcon, mapIcon, ordersIcon, favoriteIcon, favoriteFilledIcon } from '../../assets/icons';
 import { BottomNav } from '../../components/ui/BottomNav';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { useAuthStore } from '../../lib/authStore';
 import {
   useProduceList,
@@ -353,7 +354,7 @@ export function BuyerHome() {
                   id={f.userId}
                   name={f.user.name}
                   rating={f.rating.toFixed(1)}
-                  img={f.user.avatarUrl ?? `https://i.pravatar.cc/150?u=${f.userId}`}
+                  avatarUrl={f.user.avatarUrl}
                 />
               )}
             </div>
@@ -459,14 +460,24 @@ function ProductCard({ produce }: { produce: ProduceListing }) {
   );
 }
 
-function FarmerAvatar({ id, name, rating, img }: { id: string; name: string; rating: string; img: string }) {
+function FarmerAvatar({
+  id,
+  name,
+  rating,
+  avatarUrl,
+}: {
+  id: string;
+  name: string;
+  rating: string;
+  avatarUrl: string | null;
+}) {
   const navigate = useNavigate();
   return (
     <button
       onClick={() => navigate(`/buyer/farmer/${id}`)}
       className="flex flex-col items-center gap-2 min-w-[72px]">
       <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-sm relative">
-        <img src={img} alt={name} className="w-full h-full object-cover" />
+        <Avatar name={name} src={avatarUrl} className="w-full h-full" />
       </div>
       <div className="text-center">
         <p className="text-xs font-bold text-ink truncate w-16">{name}</p>

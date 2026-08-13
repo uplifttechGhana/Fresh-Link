@@ -104,6 +104,9 @@ export class StorageService {
     contentType = 'image/jpeg',
   ): Promise<string> {
     const isAudio = contentType.startsWith('audio/') || /\.(webm|m4a|mp4|ogg|wav)$/i.test(originalName);
+    const isVideo =
+      !isAudio &&
+      (contentType.startsWith('video/') || /\.(mp4|mov|webm|mkv|avi|m4v)$/i.test(originalName));
 
     // Voice notes are stored locally in dev — Cloudinary image endpoint rejects audio.
     if (isAudio) {
@@ -111,7 +114,9 @@ export class StorageService {
     }
 
     if (this.provider === 'cloudinary') {
-      return this.uploadToCloudinary(buffer, folder, contentType);
+      return isVideo
+        ? this.uploadToCloudinary(buffer, folder, contentType, 'video')
+        : this.uploadToCloudinary(buffer, folder, contentType, 'image');
     }
     if (this.provider === 's3') {
       return this.uploadToS3(buffer, originalName, folder, contentType);
@@ -136,6 +141,7 @@ export class StorageService {
     buffer: Buffer,
     folder: string,
     contentType: string,
+    resourceType: 'image' | 'video' = 'image',
   ): Promise<string> {
     const timestamp = Math.round(Date.now() / 1000);
     const publicId = uuidv4();
@@ -161,7 +167,7 @@ export class StorageService {
 
     try {
       const { data } = await axios.post(
-        `https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/${resourceType}/upload`,
         body.toString(),
         {
           timeout: 45000,

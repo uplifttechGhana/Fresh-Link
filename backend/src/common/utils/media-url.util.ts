@@ -19,3 +19,18 @@ export function assertPersistableMediaUrls(urls: string[] | undefined, field = '
     );
   }
 }
+
+/** Reject blob/data URLs for a single optional media field (e.g. a video). */
+export function sanitizeMediaUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('blob:') || url.startsWith('data:')) return undefined;
+  return /^https?:\/\//i.test(url) || url.startsWith('/uploads/') ? url : undefined;
+}
+
+export function assertPersistableMediaUrl(url: string | undefined, field = 'video') {
+  if (url && (url.startsWith('blob:') || url.startsWith('data:'))) {
+    throw new BadRequestException(
+      `${field} must be uploaded to the server first. Temporary browser preview URLs cannot be saved.`,
+    );
+  }
+}

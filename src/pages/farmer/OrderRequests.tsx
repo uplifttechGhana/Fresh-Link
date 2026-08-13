@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Check, X, MapPin, Truck } from 'lucide-react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
 import { BottomNav } from '../../components/ui/BottomNav';
 import { ApiError } from '../../lib/api';
@@ -145,11 +146,7 @@ function RequestCard({ order }: { order: Order }) {
       <div className="space-y-2 mb-4">
         <div className="flex items-center gap-2 text-sm">
           <div className="w-6 h-6 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
-            <img
-              src={order.buyer.avatarUrl ?? `https://i.pravatar.cc/150?u=${order.buyer.id}`}
-              alt={order.buyer.name}
-              className="w-full h-full object-cover"
-            />
+            <Avatar name={order.buyer.name} src={order.buyer.avatarUrl} className="w-full h-full" textClassName="text-[10px]" />
           </div>
           <span className="font-medium text-ink">{order.buyer.name}</span>
           <span className="text-xs text-muted">{order.buyer.phone}</span>

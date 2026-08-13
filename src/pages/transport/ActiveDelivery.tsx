@@ -4,6 +4,7 @@ import { Phone, MessageCircle, MapPin, CheckCircle2, Package, Loader2 } from 'lu
 import { ApiError } from '../../lib/api';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { Button } from '../../components/ui/Button';
 import { TransportRouteMap } from '../../components/transport/TransportMap';
 import {
@@ -14,7 +15,7 @@ import {
   nextJobStatus,
 } from '../../lib/hooks/useTransport';
 import { useDeliveryConversation } from '../../lib/hooks/useChat';
-import { getJobContact, openPhoneCall, contactAvatarUrl, contactRoleLabel, jobContactLeg } from '../../lib/transportUtils';
+import { getJobContact, openPhoneCall, contactRoleLabel, jobContactLeg } from '../../lib/transportUtils';
 import { TypewriterText } from '../../components/ui/TypewriterText';
 
 const STAGE_LABELS = ['Heading to pickup', 'Picked up', 'In transit', 'Delivered'];
@@ -155,11 +156,7 @@ export function ActiveDelivery() {
         {contact ? (
           <Card className="p-4 flex items-center gap-4 mb-6">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
-              <img
-                src={contactAvatarUrl(contact)}
-                alt={contact.name}
-                className="w-full h-full object-cover"
-              />
+              <Avatar name={contact.name} src={contact.avatarUrl} className="w-full h-full" />
             </div>
             <div className="flex-1">
               <h4 className="font-bold text-ink text-sm">{contact.name}</h4>

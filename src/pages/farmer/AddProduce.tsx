@@ -12,6 +12,7 @@ import { filterPersistableMediaUrls } from '../../lib/mediaUrls';
 import { useNativeCamera } from '../../lib/hooks/useNativeCamera';
 import { useHaptics } from '../../lib/hooks/useHaptics';
 import { isNative } from '../../lib/native';
+import { VideoDropzone } from '../../components/ui/VideoDropzone';
 
 const UNITS = ['kg', 'g', 'lb', 'crate', 'box', 'bag', 'bunch', 'dozen', 'litre'];
 
@@ -32,12 +33,14 @@ export function AddProduce() {
   const [stock, setStock] = useState('');
   const [description, setDescription] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [video, setVideo] = useState<string | null>(null);
   const [showCategories, setShowCategories] = useState(false);
   const [showUnits, setShowUnits] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const isFormValid = title.trim() !== '' && price.trim() !== '' && stock.trim() !== '';
+  const isFormValid =
+    title.trim() !== '' && price.trim() !== '' && stock.trim() !== '' && images.length > 0;
 
   const handleAddPhoto = () => {
     impact('light');
@@ -92,6 +95,7 @@ export function AddProduce() {
         stock: parseInt(stock, 10),
         category,
         images: persistableImages,
+        video: video ?? undefined,
       },
       {
         onSuccess: () => navigate('/farmer/produce'),
@@ -156,7 +160,14 @@ export function AddProduce() {
           {uploadError && (
             <p className="text-xs text-red-200 mt-2">{uploadError}</p>
           )}
+          {!uploadError && images.length === 0 && (
+            <p className="text-xs text-muted mt-2">
+              Add at least one real photo of this produce — buyers won't see it without one.
+            </p>
+          )}
         </div>
+
+        {images.length > 0 && <VideoDropzone value={video} onChange={setVideo} />}
 
         {/* Details Form */}
         <Card className="p-4 space-y-4 bg-green">

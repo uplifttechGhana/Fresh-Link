@@ -3,6 +3,7 @@ import { MessageCircle, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { useConversations, useSocketInbox, messagePreview, type Conversation } from '../../lib/hooks/useChat';
 import { useAuthStore } from '../../lib/authStore';
 import { BottomNav } from '../../components/ui/BottomNav';
@@ -104,11 +105,7 @@ function ConversationRow({
         {/* Avatar */}
         <div className="relative flex-shrink-0">
           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
-            <img
-              src={other.avatarUrl ?? `https://i.pravatar.cc/150?u=${other.id}`}
-              alt={other.name}
-              className="w-full h-full object-cover"
-            />
+            <Avatar name={other.name} src={other.avatarUrl} className="w-full h-full" />
           </div>
           {hasUnread && (
             <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-green rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white">

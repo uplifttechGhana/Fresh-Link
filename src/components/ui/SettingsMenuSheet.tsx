@@ -19,6 +19,7 @@ import { Card } from './Card';
 import { Sheet } from './Sheet';
 import { Button } from './Button';
 import { AvatarUploadSheet } from './AvatarUploadSheet';
+import { Avatar } from './Avatar';
 import { useStore } from '../../store';
 import { useAuthStore } from '../../lib/authStore';
 import { disconnectSocket } from '../../lib/socket';
@@ -46,21 +47,13 @@ function ProfileHeader({
       aria-label="Change profile photo"
       className={`w-16 h-16 rounded-full overflow-hidden border-2 shadow-sm flex-shrink-0 active:scale-95 transition-transform ${themed ? 'border-yellow' : 'border-white'}`}
     >
-      <img
-        src={user?.avatarUrl ?? `https://i.pravatar.cc/150?u=${user?.id ?? 'default'}`}
-        alt="User"
-        className="w-full h-full object-cover"
-      />
+      <Avatar name={user?.name} src={user?.avatarUrl} className="w-full h-full" textClassName="text-lg" />
     </button>
   ) : (
     <div
       className={`w-16 h-16 rounded-full overflow-hidden border-2 shadow-sm flex-shrink-0 ${themed ? 'border-yellow' : 'border-white'}`}
     >
-      <img
-        src={user?.avatarUrl ?? `https://i.pravatar.cc/150?u=${user?.id ?? 'default'}`}
-        alt="User"
-        className="w-full h-full object-cover"
-      />
+      <Avatar name={user?.name} src={user?.avatarUrl} className="w-full h-full" textClassName="text-lg" />
     </div>
   );
 

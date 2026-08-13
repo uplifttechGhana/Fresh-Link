@@ -23,6 +23,7 @@ import { chatKeys } from '../../lib/hooks/useChat';
 import { useVoiceRecorder } from '../../lib/hooks/useVoiceRecorder';
 import { uploadFile } from '../../lib/hooks/useStorage';
 import { VoiceMessage } from '../../components/chat/VoiceMessage';
+import { Avatar } from '../../components/ui/Avatar';
 
 function formatRecordTime(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -224,8 +225,7 @@ export function Chat() {
   const otherParty =
     otherFromConv ?? allMessages.find((m) => m.senderId !== user?.id)?.sender;
   const otherName = otherParty?.name ?? 'Contact';
-  const otherAvatar =
-    otherParty?.avatarUrl ?? `https://i.pravatar.cc/150?u=${otherParty?.id ?? 'contact'}`;
+  const otherAvatar = otherParty?.avatarUrl ?? null;
 
   const openContactProfile = () => {
     if (!conversationId || !user?.id) return;
@@ -267,7 +267,7 @@ export function Chat() {
           >
             <div className="relative flex-shrink-0">
               <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
-                <img src={otherAvatar} alt={otherName} className="w-full h-full object-cover" />
+                <Avatar name={otherName} src={otherAvatar} className="w-full h-full" />
               </div>
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green rounded-full border-2 border-white" />
             </div>
@@ -321,7 +321,7 @@ export function Chat() {
           ) : (
             <div key={m.id} className="flex gap-2 items-end">
               <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                <img src={otherAvatar} alt={otherName} className="w-full h-full object-cover" />
+                <Avatar name={otherName} src={otherAvatar} className="w-full h-full" />
               </div>
               <div className="max-w-[78%] bg-white rounded-2xl rounded-bl-sm shadow-sm text-sm text-ink px-2.5 py-2">
                 <div className="relative min-h-[28px] flex items-center">
@@ -344,7 +344,7 @@ export function Chat() {
         {otherTyping && (
           <div className="flex gap-2 items-end">
             <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-              <img src={otherAvatar} alt={otherName} className="w-full h-full object-cover" />
+              <Avatar name={otherName} src={otherAvatar} className="w-full h-full" />
             </div>
             <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-sm flex items-center gap-1">
               {[0, 0.2, 0.4].map((delay) => (

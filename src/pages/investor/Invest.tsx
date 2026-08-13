@@ -4,6 +4,7 @@ import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Sheet } from '../../components/ui/Sheet';
+import { Avatar } from '../../components/ui/Avatar';
 import { BadgeCheck, ShieldCheck, MapPin, Sprout, Loader2 } from 'lucide-react';
 import {
   useFundingRequest,
@@ -68,14 +69,7 @@ export function Invest() {
         {/* Farmer Profile Header */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-sm mb-3">
-            <img
-              src={
-                request.farmer.avatarUrl ??
-                `https://i.pravatar.cc/150?u=${request.farmer.name}`
-              }
-              alt={request.farmer.name}
-              className="w-full h-full object-cover"
-            />
+            <Avatar name={request.farmer.name} src={request.farmer.avatarUrl} className="w-full h-full" textClassName="text-2xl" />
           </div>
           <div className="flex items-center gap-1 justify-center mb-1">
             <h2 className="text-xl font-display font-bold text-ink">{request.farmer.name}</h2>

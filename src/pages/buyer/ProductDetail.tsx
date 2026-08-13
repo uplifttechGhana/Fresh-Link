@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { TopBar } from '../../components/ui/TopBar';
 import { useProduceDetail } from '../../lib/hooks/useProduce';
 import { useCartStore } from '../../lib/cartStore';
-import { resolveMediaUrls } from '../../lib/mediaUrl';
+import { resolveMediaUrl, resolveMediaUrls } from '../../lib/mediaUrl';
+import { Avatar } from '../../components/ui/Avatar';
 
 const QUANTITY_OPTIONS = ['500 g', '1 kg', '1.5 kg', '2 kg', '2.5 kg', '3 kg'];
 
@@ -27,11 +28,12 @@ export function ProductDetail() {
   const basePrice = produce?.price ?? 0;
   const currentPrice = basePrice * parseQtyMultiplier(quantity);
   const images = resolveMediaUrls(produce?.images);
+  const video = resolveMediaUrl(produce?.video);
+  const mediaCount = images.length + (video ? 1 : 0);
   const farmerName = produce?.farmer?.user?.name ?? 'Farmer';
   const farmerId = produce?.farmer?.userId ?? '';
   const farmerRating = produce?.farmer?.rating?.toFixed(1) ?? '—';
-  const farmerAvatar = produce?.farmer?.user?.avatarUrl
-    ?? `https://i.pravatar.cc/150?u=${farmerId}`;
+  const farmerAvatar = produce?.farmer?.user?.avatarUrl ?? null;
 
   if (isLoading) {
     return (
@@ -69,10 +71,16 @@ export function ProductDetail() {
       <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
         {/* Product Image Area */}
         <div className="w-full h-[340px] bg-white rounded-b-[3rem] shadow-sm relative pt-16 px-8 flex items-center justify-center">
-          {images.length > 0 ? (
+          {activeImage < images.length ? (
             <img
               src={images[activeImage]}
               alt={produce.title}
+              className="w-full h-full object-contain pb-8"
+            />
+          ) : video ? (
+            <video
+              src={video}
+              controls
               className="w-full h-full object-contain pb-8"
             />
           ) : (
@@ -81,9 +89,9 @@ export function ProductDetail() {
             </div>
           )}
           {/* Pagination dots */}
-          {images.length > 1 && (
+          {mediaCount > 1 && (
             <div className="absolute bottom-6 flex gap-1.5">
-              {images.map((_, idx) => (
+              {Array.from({ length: mediaCount }).map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveImage(idx)}
@@ -113,11 +121,7 @@ export function ProductDetail() {
               className="flex items-center gap-3 text-left">
               
               <div className="w-10 h-10 rounded-full overflow-hidden">
-                <img
-                  src={farmerAvatar}
-                  alt={farmerName}
-                  className="w-full h-full object-cover" />
-                
+                <Avatar name={farmerName} src={farmerAvatar} className="w-full h-full" />
               </div>
               <div>
                 <p className="text-sm font-bold text-ink">{farmerName}</p>

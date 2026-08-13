@@ -42,18 +42,24 @@ export class StorageController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
-      limits: { fileSize: 10 * 1024 * 1024 },
+      limits: { fileSize: 30 * 1024 * 1024 },
       fileFilter: (req, file, cb) => {
         const folder = ((req.body?.folder as string) ?? (req.query?.folder as string) ?? 'produce').toLowerCase();
         const isImage = file.mimetype.startsWith('image/');
         const isAudio =
           file.mimetype.startsWith('audio/') ||
           /\.(webm|m4a|mp4|ogg|wav)$/i.test(file.originalname ?? '');
+        const isVideo =
+          file.mimetype.startsWith('video/') ||
+          /\.(mp4|mov|webm|mkv|avi|m4v)$/i.test(file.originalname ?? '');
         if (folder === 'chat' && (isImage || isAudio)) {
           return cb(null, true);
         }
+        if (folder === 'produce' && (isImage || isVideo)) {
+          return cb(null, true);
+        }
         if (isImage) return cb(null, true);
-        return cb(new BadRequestException('Only image files are allowed (audio allowed in chat folder)'), false);
+        return cb(new BadRequestException('Only image files are allowed (video allowed in produce folder, audio in chat folder)'), false);
       },
     }),
   )

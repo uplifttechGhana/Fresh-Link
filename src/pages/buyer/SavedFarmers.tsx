@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { MapPin } from 'lucide-react';
 import { useSavedFarmers, useUnsaveFarmer } from '../../lib/hooks/useSavedFarmers';
 import { BottomNav } from '../../components/ui/BottomNav';
@@ -45,11 +46,7 @@ export function SavedFarmers() {
                   onClick={() => navigate(`/buyer/farmer/${farmer.id}`)}
                 >
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
-                    <img
-                      src={farmer.avatarUrl ?? `https://i.pravatar.cc/150?u=${farmer.id}`}
-                      alt={farmer.name}
-                      className="w-full h-full object-cover"
-                    />
+                    <Avatar name={farmer.name} src={farmer.avatarUrl} className="w-full h-full" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-ink text-base truncate">{farmer.name}</h4>

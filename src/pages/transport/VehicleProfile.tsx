@@ -4,6 +4,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Sheet } from '../../components/ui/Sheet';
 import { AvatarUploadSheet } from '../../components/ui/AvatarUploadSheet';
+import { Avatar } from '../../components/ui/Avatar';
 import { ShieldCheck, Edit2, Loader2 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
@@ -52,10 +53,7 @@ export function VehicleProfile() {
 
   const profile = me?.transportProfile;
   const displayName = user?.name ?? me?.name ?? 'Driver';
-  const avatarUrl =
-    user?.avatarUrl ??
-    me?.avatarUrl ??
-    `https://i.pravatar.cc/150?u=${user?.id ?? me?.name ?? 'driver'}`;
+  const avatarUrl = user?.avatarUrl ?? me?.avatarUrl ?? null;
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [avatarUploadOpen, setAvatarUploadOpen] = useState(false);
   const [vehicleType, setVehicleType] = useState('Van');
@@ -99,7 +97,7 @@ export function VehicleProfile() {
             className="relative active:scale-95 transition-transform"
           >
             <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 mb-3 border-4 border-white shadow-sm">
-              <img src={avatarUrl} alt="Driver" className="w-full h-full object-cover" />
+              <Avatar name={displayName} src={avatarUrl} className="w-full h-full" textClassName="text-2xl" />
             </div>
           </button>
           <h2 className="text-xl font-display font-bold text-ink">{displayName}</h2>

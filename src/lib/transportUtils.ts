@@ -42,10 +42,6 @@ export function getJobContact(job: TransportJob, leg?: 'pickup' | 'dropoff'): Jo
   return null;
 }
 
-export function contactAvatarUrl(contact: Pick<JobContact, 'id' | 'avatarUrl'>) {
-  return contact.avatarUrl ?? `https://i.pravatar.cc/150?u=${contact.id}`;
-}
-
 export function contactRoleLabel(contact: JobContact, leg?: 'pickup' | 'dropoff') {
   if (contact.role === 'farmer') return leg === 'pickup' ? 'Farmer · Pickup' : 'Farmer';
   return leg === 'dropoff' ? 'Buyer · Drop-off' : 'Buyer';

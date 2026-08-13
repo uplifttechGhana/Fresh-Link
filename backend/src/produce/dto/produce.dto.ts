@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, IsArray, IsEnum, Min, IsNotEmpty } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsArray, IsEnum, Min, IsNotEmpty, ArrayMinSize } from 'class-validator';
 import { ProduceStatus } from '@prisma/client';
 
 export class CreateProduceDto {
@@ -32,10 +32,15 @@ export class CreateProduceDto {
   @IsOptional()
   category?: string;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiProperty({ type: [String], description: 'At least one real photo of the produce is required.' })
   @IsArray()
+  @ArrayMinSize(1, { message: 'Add at least one photo of your produce before listing it.' })
+  images: string[];
+
+  @ApiPropertyOptional({ description: 'Optional short video showcasing the produce.' })
+  @IsString()
   @IsOptional()
-  images?: string[];
+  video?: string;
 }
 
 export class UpdateProduceDto {
@@ -71,8 +76,9 @@ export class UpdateProduceDto {
   @IsOptional()
   category?: string;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiPropertyOptional({ type: [String], description: 'If provided, must include at least one photo — listings can never be saved with zero photos.' })
   @IsArray()
+  @ArrayMinSize(1, { message: 'A listing needs at least one photo — add one before removing the last.' })
   @IsOptional()
   images?: string[];
 
@@ -80,6 +86,11 @@ export class UpdateProduceDto {
   @IsEnum(ProduceStatus)
   @IsOptional()
   status?: ProduceStatus;
+
+  @ApiPropertyOptional({ description: 'Optional short video showcasing the produce. Send an empty string to remove it.' })
+  @IsString()
+  @IsOptional()
+  video?: string;
 }
 
 export class ProduceQueryDto {

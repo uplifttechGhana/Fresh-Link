@@ -11,6 +11,8 @@ import { useSavedFarmers, useSaveFarmer, useUnsaveFarmer } from '../../lib/hooks
 import { useAuthStore } from '../../lib/authStore';
 import { useCartStore } from '../../lib/cartStore';
 import { resolveMediaUrl } from '../../lib/mediaUrl';
+import { LeafDecoration } from '../../components/ui/LeafDecoration';
+import { Avatar } from '../../components/ui/Avatar';
 
 export function FarmerProfile() {
   const navigate = useNavigate();
@@ -72,7 +74,9 @@ export function FarmerProfile() {
 
   const farmName = farmer.farmName ?? `${farmer.user.name} Farm`;
   const location = farmer.location ?? farmer.user.location ?? 'Ghana';
-  const avatar = farmer.user.avatarUrl ?? `https://i.pravatar.cc/150?u=${farmer.userId}`;
+  const avatar = farmer.user.avatarUrl ?? null;
+  // Real photo of the farmer's own produce, not a generic stock image.
+  const coverImage = resolveMediaUrl(farmer.produce?.[0]?.images?.[0]);
 
   return (
     <div className="w-full h-full bg-cream flex flex-col relative">
@@ -81,24 +85,26 @@ export function FarmerProfile() {
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar pb-6">
-        {/* Cover Image */}
-        <div className="w-full h-48 bg-green-800 relative">
-          <img
-            src="https://images.unsplash.com/photo-1595841696677-6489ff3f8cd1?auto=format&fit=crop&q=80&w=800"
-            alt="Farm"
-            className="w-full h-full object-cover opacity-60" />
-          
+        {/* Cover Image — the farmer's own produce photo, never a stock image */}
+        <div className="w-full h-48 bg-green-800 relative overflow-hidden isolate">
+          {coverImage ? (
+            <img
+              src={coverImage}
+              alt={farmName}
+              className="w-full h-full object-cover opacity-60" />
+          ) : (
+            <>
+              <LeafDecoration variant="monstera" className="-right-8 -top-8 w-40" opacity={25} />
+              <LeafDecoration variant="fern" className="-left-6 bottom-0 w-32" opacity={20} />
+            </>
+          )}
         </div>
 
         {/* Profile Info */}
         <div className="px-6 relative -mt-12 mb-6">
           <div className="flex justify-between items-end mb-4">
-            <div className="w-24 h-24 rounded-full border-4 border-cream overflow-hidden bg-white shadow-sm">
-              <img
-                src={avatar}
-                alt={farmer.user.name}
-                className="w-full h-full object-cover" />
-              
+            <div className="w-24 h-24 rounded-full border-4 border-cream overflow-hidden bg-green shadow-sm flex items-center justify-center">
+              <Avatar name={farmer.user.name} src={avatar} className="w-full h-full" textClassName="text-2xl" />
             </div>
             <div className="flex gap-2 pb-2 mt-14">
               <button

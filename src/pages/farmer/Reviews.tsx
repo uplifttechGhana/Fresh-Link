@@ -1,6 +1,7 @@
 import React from 'react';
 import { TopBar } from '../../components/ui/TopBar';
 import { Card } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
 import { Star } from 'lucide-react';
 import { useFarmerReviews, FarmerReview } from '../../lib/hooks/useProduce';
 import { useAuthStore } from '../../lib/authStore';
@@ -86,11 +87,7 @@ function ReviewCard({ review }: { review: FarmerReview }) {
   return (
     <Card className="p-4">
       <div className="flex items-start gap-3 mb-2">
-        <img
-          src={review.buyer.avatarUrl ?? `https://i.pravatar.cc/150?u=${review.id}`}
-          alt={review.buyer.name}
-          className="w-10 h-10 rounded-full object-cover bg-gray-100"
-        />
+        <Avatar name={review.buyer.name} src={review.buyer.avatarUrl} className="w-10 h-10 rounded-full bg-gray-100" />
         <div className="flex-1">
           <h4 className="font-bold text-sm text-ink">{review.buyer.name}</h4>
           <div className="flex items-center justify-between">

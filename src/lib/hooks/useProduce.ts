@@ -22,6 +22,7 @@ export interface ProduceListing {
   unit: string;
   stock: number;
   images: string[];
+  video: string | null;
   status: string;
   farmer: FarmerInfo;
   createdAt: string;
@@ -96,6 +97,7 @@ export interface MyProduceListing {
   unit: string;
   stock: number;
   images: string[];
+  video: string | null;
   status: 'active' | 'out_of_stock' | 'deleted';
   createdAt: string;
   updatedAt: string;
@@ -109,6 +111,7 @@ export interface CreateProducePayload {
   stock: number;
   category?: string;
   images?: string[];
+  video?: string;
 }
 
 export interface UpdateProducePayload extends Partial<CreateProducePayload> {
